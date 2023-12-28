@@ -31,6 +31,29 @@ class ControllerScope<C extends IController> extends InheritedWidget {
 
   final _ControllerDependency<C> _dependency;
 
+  /// The state from the closest instance of this class
+  /// that encloses the given context, if any.
+  /// e.g. `ControllerScope.maybeOf<MyStateController>(context)`.
+  static C? maybeOf<C extends IController>(BuildContext context,
+      {bool listen = true}) {
+    final element =
+        context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
+    if (listen && element != null) context.dependOnInheritedElement(element);
+    return element is ControllerScope$Element<C> ? element.controller : null;
+  }
+
+  static Never _notFoundInheritedWidgetOfExactType() => throw ArgumentError(
+        'Out of scope, not found inherited widget '
+            'a ControllerScope of the exact type',
+        'out_of_scope',
+      );
+
+  /// The state from the closest instance of this class
+  /// that encloses the given context.
+  /// e.g. `ControllerScope.of<MyStateController>(context)`
+  static C of<C>(BuildContext context, {bool listen = true}) =>
+      maybeOf(context, listen: listen) ?? _notFoundInheritedWidgetOfExactType();
+
   @override
   bool updateShouldNotify(covariant ControllerScope oldWidget) =>
       _dependency != oldWidget._dependency;
@@ -42,18 +65,10 @@ class ControllerScope<C extends IController> extends InheritedWidget {
 /// {@nodoc}
 @internal
 final class ControllerScope$Element<C extends IController>
-    extends InheritedElement with _ControllerDelegateMixin {
+    extends InheritedElement {
   /// {@nodoc}
   ControllerScope$Element(ControllerScope<C> widget) : super(widget);
 
-  @override
-  Widget build() {
-    if (_dirty && _subscribed) notifyClients(widget as ControllerScope<C>);
-    return super.build();
-  }
-}
-
-mixin _ControllerDelegateMixin<C extends IController> on InheritedElement {
   @nonVirtual
   _ControllerDependency<C> get _dependency =>
       (widget as ControllerScope<C>)._dependency;
@@ -91,13 +106,15 @@ mixin _ControllerDelegateMixin<C extends IController> on InheritedElement {
 
   @override
   void mount(Element? parent, Object? newSlot) {
-    switch (_dependency) {
-      case _ControllerDependency$Create<C> d:
-        if (!d.lazy) _controller = d.create();
-        break;
-      case _ControllerDependency$Value<C> d:
-        _controller = d.controller;
-        break;
+    if (_controller == null) {
+      switch (_dependency) {
+        case _ControllerDependency$Create<C> d:
+          if (!d.lazy) _controller = d.create();
+          break;
+        case _ControllerDependency$Value<C> d:
+          _controller = d.controller;
+          break;
+      }
     }
     super.mount(parent, newSlot);
   }
@@ -109,25 +126,27 @@ mixin _ControllerDelegateMixin<C extends IController> on InheritedElement {
     final newDependency = newWidget._dependency;
     if (!identical(oldDependency, newDependency)) {
       switch (newDependency) {
-        case _ControllerDependency$Create<C> _:
+        case _ControllerDependency$Create<C> d:
           assert(
             oldDependency is _ControllerDependency$Create<C>,
             'Cannot change scope type',
           );
-          break;
+          if (_controller == null && (!d.lazy || _subscribed)) {
+            _controller = d.create();
+          }
         case _ControllerDependency$Value<C> d:
           assert(
             oldDependency is _ControllerDependency$Value<C>,
             'Cannot change scope type',
           );
           final newController = d.controller;
-          if (identical(_controller, newController)) break;
-          _controller?.removeListener(_handleUpdate);
-          _controller = newController;
-          // Re-subscribe if necessary
-          if (_subscribed) newController.addListener(_handleUpdate);
-          break;
+          if (!identical(_controller, newController)) {
+            _controller?.removeListener(_handleUpdate);
+            _controller = newController;
+          }
       }
+      // Re-subscribe if necessary
+      if (_subscribed) _controller?.addListener(_handleUpdate);
     }
     super.update(newWidget);
   }
@@ -170,6 +189,12 @@ mixin _ControllerDelegateMixin<C extends IController> on InheritedElement {
     // Dispose controller if it was created by this scope
     if (_dependency is _ControllerDependency$Create<C>) _controller?.dispose();
     super.unmount();
+  }
+
+  @override
+  Widget build() {
+    if (_dirty && _subscribed) notifyClients(widget as ControllerScope<C>);
+    return super.build();
   }
 }
 
