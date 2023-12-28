@@ -1,0 +1,47 @@
+name: control
+description: "Simple state management for Flutter with concurrency support."
+version: 0.0.1-pre.0
+
+homepage: https://github.com/PlugFox/control
+
+repository: https://github.com/PlugFox/control
+
+issue_tracker: https://github.com/PlugFox/control/issues
+
+funding:
+  - https://www.buymeacoffee.com/plugfox
+  - https://www.patreon.com/plugfox
+  - https://boosty.to/plugfox
+
+topics:
+  - architecture
+  - state-management
+  - state
+  - concurrency
+  - controller
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+#screenshots:
+#  - description: 'Example of using the package'
+#    path: example.png
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
