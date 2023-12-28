@@ -23,6 +23,9 @@ abstract interface class IController implements Listenable {
   /// The number of subscribers to the controller
   int get subscribers;
 
+  /// Whether any listeners are currently registered.
+  bool get hasListeners;
+
   /// Discards any resources used by the object.
   ///
   /// This method should only be called by the object's owner.

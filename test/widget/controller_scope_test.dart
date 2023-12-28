@@ -66,8 +66,37 @@ void _$createGroup() => group('ControllerScope.create', () {
       });
 
       testWidgets(
-        'inject and recive',
-        (tester) async {},
+        'inject_and_recive',
+        (tester) async {
+          await tester.pumpWidget(
+            _appContext(
+              child: ControllerScope<_FakeController>(
+                _FakeController.new,
+                child: StateConsumer<_FakeController, int>(
+                  builder: (context, state, child) => Text('$state'),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('0'), findsOneWidget);
+          expect(find.text('1'), findsNothing);
+          final context = tester
+              .firstElement(find.byType(ControllerScope<_FakeController>));
+          final controller = ControllerScope.of<_FakeController>(context);
+          expect(
+              controller,
+              isA<_FakeController>()
+                  .having((c) => c.state, 'state', equals(0)));
+          controller.add(1);
+          await tester.pumpAndSettle();
+          expect(find.text('0'), findsNothing);
+          expect(find.text('1'), findsOneWidget);
+          controller.subtract(2);
+          await tester.pumpAndSettle();
+          expect(controller.state, equals(-1));
+          expect(find.text('-1'), findsOneWidget);
+        },
       );
     });
 

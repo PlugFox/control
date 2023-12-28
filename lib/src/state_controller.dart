@@ -4,6 +4,13 @@ import 'package:control/src/controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 
+/// Selector from [StateController]
+typedef StateControllerSelector<C extends IStateController, Value> = Value
+    Function(C controller);
+
+/// Filter for [StateController]
+typedef StateControllerFilter<Value> = bool Function(Value prev, Value next);
+
 /// State controller
 ///
 /// Do not implement this interface directly, instead extend [StateController].
@@ -18,7 +25,6 @@ abstract interface class IStateController<S extends Object>
 
 /// State controller
 abstract base class StateController<S extends Object> extends Controller
-    with _StateControllerShortcutsMixin<S>
     implements IStateController<S> {
   /// State controller
   StateController({required S initialState}) : _$state = initialState;
@@ -40,11 +46,9 @@ abstract base class StateController<S extends Object> extends Controller
     if (isDisposed) return;
     notifyListeners();
   }
-}
 
-/// {@nodoc}
-base mixin _StateControllerShortcutsMixin<S extends Object> on Controller
-    implements IStateController<S> {
+  // --- Helper --- //
+
   late final List<StreamController<S>> _$streamControllers =
       <StreamController<S>>[];
 
@@ -65,6 +69,14 @@ base mixin _StateControllerShortcutsMixin<S extends Object> on Controller
     };
     return controller.stream;
   }
+
+  /// Transform [StateController] in to [ValueListenable]
+  /// using [selector] with optional [test] filter.
+  ValueListenable<Value> select<Value>(
+    StateControllerSelector<StateController, Value> selector, [
+    StateControllerFilter<Value>? test,
+  ]) =>
+      _StateController$ValueListenableSelect(this, selector, test);
 
   @override
   void dispose() {
@@ -89,4 +101,60 @@ final class _StateController$ValueListenableView<S extends Object>
   @override
   void removeListener(VoidCallback listener) =>
       _controller.removeListener(listener);
+}
+
+final class _StateController$ValueListenableSelect<C extends IStateController,
+    Value> with ChangeNotifier implements ValueListenable<Value> {
+  _StateController$ValueListenableSelect(
+    this._controller,
+    this._selector,
+    this._test,
+  );
+
+  final C _controller;
+  final StateControllerSelector<C, Value> _selector;
+  final StateControllerFilter<Value>? _test;
+  bool get _isDisposed => _controller.isDisposed;
+  bool _subscribed = false;
+
+  late Value _$value = _selector(_controller);
+
+  @override
+  Value get value => _subscribed ? _$value : _$value = _selector(_controller);
+
+  void _update() {
+    final newValue = _selector(_controller);
+    if (identical(_$value, newValue)) return;
+    if (!(_test?.call(_$value, newValue) ?? true)) return;
+    _$value = newValue;
+    notifyListeners();
+  }
+
+  @override
+  void addListener(VoidCallback listener) {
+    if (_isDisposed) return;
+    if (!_subscribed) {
+      _$value = _selector(_controller);
+      _controller.addListener(_update);
+      _subscribed = true;
+    }
+    super.addListener(listener);
+  }
+
+  @override
+  void removeListener(VoidCallback listener) {
+    super.removeListener(listener);
+    if (_isDisposed) return;
+    if (!hasListeners && _subscribed) {
+      _controller.removeListener(_update);
+      _subscribed = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_update);
+    _subscribed = false;
+    super.dispose();
+  }
 }

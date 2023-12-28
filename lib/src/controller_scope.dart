@@ -4,6 +4,16 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
+/// Extension methods for [BuildContext]
+/// to simplify the use of [ControllerScope].
+extension ControllerScopeBuildContextExtension on BuildContext {
+  /// The state from the closest instance of this class
+  /// that encloses the given context.
+  /// e.g. `context.controllerOf<MyStateController>()`
+  C controllerOf<C extends IController>({bool listen = false}) =>
+      ControllerScope.of<C>(this, listen: listen);
+}
+
 /// {@template controller_scope}
 /// Dependency injection of [Controller]s.
 /// {@endtemplate}
@@ -35,7 +45,7 @@ class ControllerScope<C extends IController> extends InheritedWidget {
   /// that encloses the given context, if any.
   /// e.g. `ControllerScope.maybeOf<MyStateController>(context)`.
   static C? maybeOf<C extends IController>(BuildContext context,
-      {bool listen = true}) {
+      {bool listen = false}) {
     final element =
         context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
     if (listen && element != null) context.dependOnInheritedElement(element);
@@ -51,8 +61,10 @@ class ControllerScope<C extends IController> extends InheritedWidget {
   /// The state from the closest instance of this class
   /// that encloses the given context.
   /// e.g. `ControllerScope.of<MyStateController>(context)`
-  static C of<C>(BuildContext context, {bool listen = true}) =>
-      maybeOf(context, listen: listen) ?? _notFoundInheritedWidgetOfExactType();
+  static C of<C extends IController>(BuildContext context,
+          {bool listen = false}) =>
+      maybeOf<C>(context, listen: listen) ??
+      _notFoundInheritedWidgetOfExactType();
 
   @override
   bool updateShouldNotify(covariant ControllerScope oldWidget) =>
@@ -74,7 +86,7 @@ final class ControllerScope$Element<C extends IController>
       (widget as ControllerScope<C>)._dependency;
 
   @nonVirtual
-  late C? _controller;
+  C? _controller;
 
   /// Use this getter to initialize the controller.
   /// Use [_controller] instead of [controller] to avoid initialization.
