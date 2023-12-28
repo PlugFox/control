@@ -1,0 +1,79 @@
+name: example
+description: "Control example"
+
+publish_to: 'none'
+
+homepage: https://github.com/PlugFox/control
+
+repository: https://github.com/PlugFox/control
+
+issue_tracker: https://github.com/PlugFox/control/issues
+
+funding:
+  - https://www.buymeacoffee.com/plugfox
+  - https://www.patreon.com/plugfox
+  - https://boosty.to/plugfox
+
+topics:
+  - architecture
+  - state-management
+  - state
+  - concurrency
+  - controller
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  # Flutter SDK
+  flutter:
+    sdk: flutter
+
+  # Utility
+  collection: any
+  async: any
+  meta: any
+  path: any
+  convert: any
+
+  # Logger
+  l: ^4.1.0-pre.1
+
+  # Storage
+  shared_preferences: ^2.2.2
+
+  # UI and Widgets
+  cupertino_icons: ^1.0.5
+
+  # State management
+  control:
+    path: ../
+
+dev_dependencies:
+  # Unit & Widget tests for Flutter
+  flutter_test:
+    sdk: flutter
+  # Integration tests for Flutter
+  integration_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^2.0.1
+
+  # Code generation
+  build_runner: ^2.4.6
+
+flutter:
+  generate: true
+  uses-material-design: true

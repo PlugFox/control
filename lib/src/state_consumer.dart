@@ -1,7 +1,7 @@
 import 'package:control/src/state_controller.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
 /// Fire when the state changes.
 typedef StateConsumerListener<S> = void Function(

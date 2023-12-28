@@ -21,6 +21,7 @@ abstract base class StateController<State extends Object> extends Controller
   State get state => _$state;
   State _$state;
 
+  /// Emit a new state, usually based on [state] and some additional logic.
   @protected
   @nonVirtual
   void setState(State state) {
