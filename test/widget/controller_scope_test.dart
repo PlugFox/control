@@ -1,24 +1,24 @@
+import 'package:control/src/controller_scope.dart';
 import 'package:control/src/sequential_controller_concurrency.dart';
 import 'package:control/src/state_consumer.dart';
 import 'package:control/src/state_controller.dart';
-import 'package:control/src/state_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() => group('StateScope', () {
+void main() => group('ControllerScope', () {
       _$valueGroup();
       _$createGroup();
     });
 
-void _$valueGroup() => group('StateScope.value', () {
+void _$valueGroup() => group('ControllerScope.value', () {
       test('constructor', () {
         expect(
-          () => const StateScope(create: _FakeController.new),
+          () => ControllerScope(_FakeController.new),
           returnsNormally,
         );
         expect(
-          const StateScope(create: _FakeController.new),
-          isA<StateScope>(),
+          ControllerScope(_FakeController.new),
+          isA<ControllerScope>(),
         );
       });
 
@@ -28,7 +28,7 @@ void _$valueGroup() => group('StateScope.value', () {
           final controller = _FakeController();
           await tester.pumpWidget(
             _appContext(
-              child: StateScope.value(
+              child: ControllerScope.value(
                 controller,
                 child: StateConsumer(
                   controller: controller,
@@ -53,15 +53,15 @@ void _$valueGroup() => group('StateScope.value', () {
       );
     });
 
-void _$createGroup() => group('StateScope.create', () {
+void _$createGroup() => group('ControllerScope.create', () {
       test('constructor', () {
         expect(
-          () => const StateScope(create: _FakeController.new),
+          () => ControllerScope(_FakeController.new),
           returnsNormally,
         );
         expect(
-          const StateScope(create: _FakeController.new),
-          isA<StateScope>(),
+          ControllerScope(_FakeController.new),
+          isA<ControllerScope>(),
         );
       });
 
@@ -72,9 +72,9 @@ void _$createGroup() => group('StateScope.create', () {
     });
 
 /// Basic wrapper for the current widgets.
-Widget _appContext({required Widget child}) => MediaQuery(
-      data: const MediaQueryData(
-        size: Size(800, 600),
+Widget _appContext({required Widget child, Size? size}) => MediaQuery(
+      data: MediaQueryData(
+        size: size ?? const Size(800, 600),
       ),
       child: Directionality(
         textDirection: TextDirection.ltr,

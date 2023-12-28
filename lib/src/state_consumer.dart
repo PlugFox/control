@@ -86,7 +86,10 @@ class _StateConsumerState<S extends Object> extends State<StateConsumer<S>> {
 
   void _subscribe() => _controller.addListener(_valueChanged);
 
-  void _unsubscribe() => _controller.removeListener(_valueChanged);
+  void _unsubscribe() {
+    if (_controller.isDisposed) return;
+    _controller.removeListener(_valueChanged);
+  }
 
   void _valueChanged() {
     final oldState = _previousState, newState = _controller.state;

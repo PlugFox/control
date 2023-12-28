@@ -1,15 +1,27 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show Listenable, ChangeNotifier;
+import 'package:control/src/registry.dart';
+import 'package:control/src/state_controller.dart';
+import 'package:flutter/foundation.dart'
+    show ChangeNotifier, Listenable, VoidCallback;
 import 'package:meta/meta.dart';
 
-/// {@template controller}
 /// The controller responsible for processing the logic,
 /// the connection of widgets and the date of the layer.
-/// {@endtemplate}
+///
+/// Do not implement this interface directly, instead extend [Controller].
+///
+/// {@nodoc}
+@internal
 abstract interface class IController implements Listenable {
   /// Whether the controller is currently handling a requests
   bool get isProcessing;
+
+  /// Whether the controller is permanently disposed
+  bool get isDisposed;
+
+  /// The number of subscribers to the controller
+  int get subscribers;
 
   /// Discards any resources used by the object.
   ///
@@ -20,17 +32,17 @@ abstract interface class IController implements Listenable {
 /// Controller observer
 abstract interface class IControllerObserver {
   /// Called when the controller is created.
-  void onCreate(IController controller);
+  void onCreate(Controller controller);
 
   /// Called when the controller is disposed.
-  void onDispose(IController controller);
+  void onDispose(Controller controller);
 
   /// Called on any state change in the controller.
-  void onStateChanged(
-      IController controller, Object prevState, Object nextState);
+  void onStateChanged<S extends Object>(
+      StateController<S> controller, S prevState, S nextState);
 
   /// Called on any error in the controller.
-  void onError(IController controller, Object error, StackTrace stackTrace);
+  void onError(Controller controller, Object error, StackTrace stackTrace);
 }
 
 /// {@template controller}
@@ -40,6 +52,7 @@ abstract interface class IControllerObserver {
 abstract base class Controller with ChangeNotifier implements IController {
   /// {@macro controller}
   Controller() {
+    ControllerRegistry().insert<Controller>(this);
     runZonedGuarded<void>(
       () => Controller.observer?.onCreate(this),
       (error, stackTrace) {/* ignore */},
@@ -49,9 +62,20 @@ abstract base class Controller with ChangeNotifier implements IController {
   /// Controller observer
   static IControllerObserver? observer;
 
-  /// Whether the controller is permanently disposed
+  /// Return a [Listenable] that triggers when any of the given [Listenable]s
+  /// themselves trigger.
+  static Listenable merge(Iterable<Listenable?> listenables) =>
+      Listenable.merge(
+        List<Listenable>.unmodifiable(listenables.whereType<Listenable>()),
+      );
+
+  @override
   bool get isDisposed => _$isDisposed;
   bool _$isDisposed = false;
+
+  @override
+  int get subscribers => _$subscribers;
+  int _$subscribers = 0;
 
   /// Error handling callback
   @protected
@@ -64,19 +88,50 @@ abstract base class Controller with ChangeNotifier implements IController {
   @protected
   void handle(FutureOr<void> Function() handler);
 
+  @protected
+  @nonVirtual
+  @override
+  void notifyListeners() {
+    if (isDisposed) {
+      assert(false, 'A $runtimeType was already disposed.');
+      return;
+    }
+    super.notifyListeners();
+  }
+
+  @override
+  @mustCallSuper
+  void addListener(VoidCallback listener) {
+    if (isDisposed) {
+      assert(false, 'A $runtimeType was already disposed.');
+      return;
+    }
+    super.addListener(listener);
+    _$subscribers++;
+  }
+
+  @override
+  @mustCallSuper
+  void removeListener(VoidCallback listener) {
+    super.removeListener(listener);
+    if (isDisposed) return;
+    _$subscribers--;
+  }
+
   @override
   @mustCallSuper
   void dispose() {
+    if (_$isDisposed) {
+      assert(false, 'A $runtimeType was already disposed.');
+      return;
+    }
     _$isDisposed = true;
+    _$subscribers = 0;
     runZonedGuarded<void>(
       () => Controller.observer?.onDispose(this),
       (error, stackTrace) {/* ignore */},
     );
+    ControllerRegistry().remove<Controller>();
     super.dispose();
   }
-
-  @protected
-  @nonVirtual
-  @override
-  void notifyListeners() => super.notifyListeners();
 }

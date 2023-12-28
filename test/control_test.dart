@@ -2,7 +2,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'widget/state_scope_test.dart' as state_scope_test;
+import 'widget/controller_scope_test.dart' as state_scope_test;
 
 void main() {
   group('unit', () {
