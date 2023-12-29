@@ -14,9 +14,6 @@ import 'package:meta/meta.dart';
 /// {@nodoc}
 @internal
 abstract interface class IController implements Listenable {
-  /// Whether the controller is currently handling a requests
-  bool get isProcessing;
-
   /// Whether the controller is permanently disposed
   bool get isDisposed;
 
@@ -25,6 +22,12 @@ abstract interface class IController implements Listenable {
 
   /// Whether any listeners are currently registered.
   bool get hasListeners;
+
+  /// Whether the controller is currently handling a requests
+  bool get isProcessing;
+
+  /// A future that completes when the controller is done processing.
+  Future<void> get done;
 
   /// Discards any resources used by the object.
   ///

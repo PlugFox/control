@@ -1,14 +1,19 @@
 import 'dart:async';
 
 import 'package:control/src/controller.dart';
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:meta/meta.dart';
 
-/// Droppable controller concurrency
-base mixin DroppableControllerConcurrency on Controller {
+/// Sequential controller concurrency
+base mixin ConcurrentControllerHandler on Controller {
   @override
   @nonVirtual
   bool get isProcessing => _$processingCalls > 0;
   int _$processingCalls = 0;
+
+  @override
+  Future<void> get done => _done?.future ?? SynchronousFuture<void>(null);
+  Completer<void>? _done;
 
   @override
   @protected
@@ -20,8 +25,9 @@ base mixin DroppableControllerConcurrency on Controller {
   ]) =>
       runZonedGuarded<void>(
         () async {
-          if (isDisposed || isProcessing) return;
+          if (isDisposed) return;
           _$processingCalls++;
+          _done ??= Completer<void>.sync();
           try {
             await handler();
           } on Object catch (error, stackTrace) {
@@ -34,6 +40,13 @@ base mixin DroppableControllerConcurrency on Controller {
               await doneHandler?.call();
             }).catchError(onError);
             _$processingCalls--;
+            if (_$processingCalls == 0) {
+              final completer = _done;
+              if (completer != null && !completer.isCompleted) {
+                completer.complete();
+              }
+              _done = null;
+            }
           }
         },
         onError,

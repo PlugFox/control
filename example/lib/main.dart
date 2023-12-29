@@ -44,7 +44,7 @@ typedef CounterState = ({int count, bool idle});
 
 /// Counter controller
 final class CounterController extends StateController<CounterState>
-    with SequentialControllerConcurrency {
+    with SequentialControllerHandler {
   CounterController({CounterState? initialState})
       : super(initialState: initialState ?? (idle: true, count: 0));
 

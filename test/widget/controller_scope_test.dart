@@ -1,5 +1,5 @@
 import 'package:control/src/controller_scope.dart';
-import 'package:control/src/sequential_controller_concurrency.dart';
+import 'package:control/src/sequential_controller_handler.dart';
 import 'package:control/src/state_consumer.dart';
 import 'package:control/src/state_controller.dart';
 import 'package:flutter/material.dart';
@@ -134,7 +134,7 @@ Widget _appContext({required Widget child, Size? size}) => MediaQuery(
     );
 
 final class _FakeController extends StateController<int>
-    with SequentialControllerConcurrency {
+    with SequentialControllerHandler {
   _FakeController({int? initialState}) : super(initialState: initialState ?? 0);
 
   void add(int value) => handle(() async {

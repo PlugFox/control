@@ -2,15 +2,20 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:control/src/controller.dart';
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:meta/meta.dart';
 
 /// Sequential controller concurrency
-base mixin SequentialControllerConcurrency on Controller {
+base mixin SequentialControllerHandler on Controller {
   final _ControllerEventQueue _eventQueue = _ControllerEventQueue();
 
   @override
   @nonVirtual
   bool get isProcessing => _eventQueue.length > 0;
+
+  @override
+  Future<void> get done =>
+      _eventQueue._processing ?? SynchronousFuture<void>(null);
 
   @override
   @protected

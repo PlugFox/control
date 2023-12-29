@@ -58,7 +58,7 @@ abstract base class StateController<S extends Object> extends Controller
 
   /// Returns a [Stream] of state changes.
   Stream<S> toStream() {
-    final controller = StreamController<S>(sync: true);
+    final controller = StreamController<S>();
     _$streamControllers.add(controller);
     void listener() => controller.add(state);
     addListener(listener);
@@ -85,6 +85,7 @@ abstract base class StateController<S extends Object> extends Controller
   void dispose() {
     for (final controller in _$streamControllers) controller.close();
     _$streamControllers.length = 0;
+    scheduleMicrotask(() {});
     super.dispose();
   }
 }
