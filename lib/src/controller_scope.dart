@@ -1,6 +1,6 @@
 import 'package:control/src/controller.dart';
 import 'package:control/src/state_controller.dart';
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
@@ -10,7 +10,7 @@ extension ControllerScopeBuildContextExtension on BuildContext {
   /// The state from the closest instance of this class
   /// that encloses the given context.
   /// e.g. `context.controllerOf<MyStateController>()`
-  C controllerOf<C extends IController>({bool listen = false}) =>
+  C controllerOf<C extends Listenable>({bool listen = false}) =>
       ControllerScope.of<C>(this, listen: listen);
 }
 
@@ -18,7 +18,7 @@ extension ControllerScopeBuildContextExtension on BuildContext {
 /// Dependency injection of [Controller]s.
 /// {@endtemplate}
 @experimental
-class ControllerScope<C extends IController> extends InheritedWidget {
+class ControllerScope<C extends Listenable> extends InheritedWidget {
   /// {@macro controller_scope}
   ControllerScope(
     C Function() create, {
@@ -46,7 +46,7 @@ class ControllerScope<C extends IController> extends InheritedWidget {
   /// The state from the closest instance of this class
   /// that encloses the given context, if any.
   /// e.g. `ControllerScope.maybeOf<MyStateController>(context)`.
-  static C? maybeOf<C extends IController>(BuildContext context,
+  static C? maybeOf<C extends Listenable>(BuildContext context,
       {bool listen = false}) {
     final element =
         context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
@@ -63,7 +63,7 @@ class ControllerScope<C extends IController> extends InheritedWidget {
   /// The state from the closest instance of this class
   /// that encloses the given context.
   /// e.g. `ControllerScope.of<MyStateController>(context)`
-  static C of<C extends IController>(BuildContext context,
+  static C of<C extends Listenable>(BuildContext context,
           {bool listen = false}) =>
       maybeOf<C>(context, listen: listen) ??
       _notFoundInheritedWidgetOfExactType();
@@ -78,7 +78,7 @@ class ControllerScope<C extends IController> extends InheritedWidget {
 
 /// {@nodoc}
 @internal
-final class ControllerScope$Element<C extends IController>
+final class ControllerScope$Element<C extends Listenable>
     extends InheritedElement {
   /// {@nodoc}
   ControllerScope$Element(ControllerScope<C> widget) : super(widget);
@@ -86,6 +86,11 @@ final class ControllerScope$Element<C extends IController>
   @nonVirtual
   _ControllerDependency<C> get _dependency =>
       (widget as ControllerScope<C>)._dependency;
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) =>
+      super.debugFillProperties(
+          _debugFillPropertiesBuilder(_controller, properties));
 
   @nonVirtual
   C? _controller;
@@ -198,10 +203,12 @@ final class ControllerScope$Element<C extends IController>
   @override
   @mustCallSuper
   void unmount() {
-    _controller?.removeListener(_handleUpdate);
+    final listenable = _controller;
+    listenable?.removeListener(_handleUpdate);
     _subscribed = false;
     // Dispose controller if it was created by this scope
-    if (_dependency is _ControllerDependency$Create<C>) _controller?.dispose();
+    if (_dependency is _ControllerDependency$Create<C> &&
+        listenable is ChangeNotifier) listenable.dispose();
     super.unmount();
   }
 
@@ -214,17 +221,17 @@ final class ControllerScope$Element<C extends IController>
 
 /// {@nodoc}
 @immutable
-sealed class _ControllerDependency<Controller extends IController> {
+sealed class _ControllerDependency<C extends Listenable> {
   const _ControllerDependency();
 }
 
 /// {@nodoc}
-final class _ControllerDependency$Create<Controller extends IController>
-    extends _ControllerDependency<Controller> {
+final class _ControllerDependency$Create<C extends Listenable>
+    extends _ControllerDependency<C> {
   const _ControllerDependency$Create(
       {required this.create, required this.lazy});
 
-  final Controller Function() create;
+  final C Function() create;
 
   final bool lazy;
 
@@ -237,11 +244,11 @@ final class _ControllerDependency$Create<Controller extends IController>
 }
 
 /// {@nodoc}
-final class _ControllerDependency$Value<Controller extends IController>
-    extends _ControllerDependency<Controller> {
+final class _ControllerDependency$Value<C extends Listenable>
+    extends _ControllerDependency<C> {
   const _ControllerDependency$Value({required this.controller});
 
-  final Controller controller;
+  final C controller;
 
   @override
   int get hashCode => controller.hashCode;
@@ -251,4 +258,56 @@ final class _ControllerDependency$Value<Controller extends IController>
       identical(this, other) ||
       other is _ControllerDependency$Value &&
           identical(controller, other.controller);
+}
+
+DiagnosticPropertiesBuilder _debugFillPropertiesBuilder(
+    Listenable? controller, DiagnosticPropertiesBuilder properties) {
+  if (controller == null) return properties;
+
+  switch (controller) {
+    case StateController<Object> sc:
+      properties
+        ..add(
+            DiagnosticsProperty<StateController<Object>>('StateController', sc))
+        ..add(StringProperty('State', sc.state.toString()))
+        ..add(IntProperty('Subscribers', sc.subscribers))
+        ..add(FlagProperty(
+          'isDisposed',
+          value: sc.isProcessing,
+          ifTrue: 'Disposed',
+          ifFalse: 'Not disposed',
+        ))
+        ..add(FlagProperty(
+          'isProcessing',
+          value: sc.isProcessing,
+          ifTrue: 'Processing',
+          ifFalse: 'Idle',
+        ));
+    case Controller c:
+      properties
+        ..add(DiagnosticsProperty<Controller>.lazy('Controller', () => c))
+        ..add(IntProperty('Subscribers', c.subscribers))
+        ..add(FlagProperty(
+          'isDisposed',
+          value: c.isProcessing,
+          ifTrue: 'Disposed',
+          ifFalse: 'Not disposed',
+        ))
+        ..add(FlagProperty(
+          'isProcessing',
+          value: c.isProcessing,
+          ifTrue: 'Processing',
+          ifFalse: 'Idle',
+        ));
+    case ValueListenable<Object?> vl:
+      properties
+        ..add(DiagnosticsProperty<ValueListenable<Object?>>.lazy(
+            'ValueListenable', () => vl))
+        ..add(StringProperty('Value', vl.value?.toString() ?? 'null'));
+    case ChangeNotifier cn:
+      properties.add(DiagnosticsProperty<ChangeNotifier>('ChangeNotifier', cn));
+    case Listenable l:
+      properties.add(DiagnosticsProperty<Listenable>('Listenable', l));
+  }
+  return properties;
 }
