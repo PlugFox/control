@@ -22,22 +22,24 @@ class ControllerScope<C extends IController> extends InheritedWidget {
   /// {@macro controller_scope}
   ControllerScope(
     C Function() create, {
-    super.child = const SizedBox.shrink(),
+    Widget? child,
     bool lazy = true,
     super.key,
-  }) : _dependency = _ControllerDependency$Create<C>(
+  })  : _dependency = _ControllerDependency$Create<C>(
           create: create,
           lazy: lazy,
-        );
+        ),
+        super(child: child ?? const SizedBox.shrink());
 
   /// {@macro controller_scope}
   ControllerScope.value(
     C controller, {
-    super.child = const SizedBox.shrink(),
+    Widget? child,
     super.key,
-  }) : _dependency = _ControllerDependency$Value<C>(
+  })  : _dependency = _ControllerDependency$Value<C>(
           controller: controller,
-        );
+        ),
+        super(child: child ?? const SizedBox.shrink());
 
   final _ControllerDependency<C> _dependency;
 

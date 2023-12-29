@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 
 /// Selector from [StateController]
-typedef StateControllerSelector<C extends IStateController, Value> = Value
-    Function(C controller);
+typedef StateControllerSelector<S extends Object, Value> = Value Function(
+    S state);
 
 /// Filter for [StateController]
 typedef StateControllerFilter<Value> = bool Function(Value prev, Value next);
@@ -72,11 +72,14 @@ abstract base class StateController<S extends Object> extends Controller
 
   /// Transform [StateController] in to [ValueListenable]
   /// using [selector] with optional [test] filter.
+  ///
+  /// The [selector] is called with the current [StateController] and
+  /// returns a value derived from [StateController.state].
   ValueListenable<Value> select<Value>(
-    StateControllerSelector<StateController, Value> selector, [
+    StateControllerSelector<S, Value> selector, [
     StateControllerFilter<Value>? test,
   ]) =>
-      _StateController$ValueListenableSelect(this, selector, test);
+      _StateController$ValueListenableSelect<S, Value>(this, selector, test);
 
   @override
   void dispose() {
@@ -103,27 +106,29 @@ final class _StateController$ValueListenableView<S extends Object>
       _controller.removeListener(listener);
 }
 
-final class _StateController$ValueListenableSelect<C extends IStateController,
-    Value> with ChangeNotifier implements ValueListenable<Value> {
+final class _StateController$ValueListenableSelect<S extends Object, Value>
+    with ChangeNotifier
+    implements ValueListenable<Value> {
   _StateController$ValueListenableSelect(
     this._controller,
     this._selector,
     this._test,
   );
 
-  final C _controller;
-  final StateControllerSelector<C, Value> _selector;
+  final IStateController<S> _controller;
+  final StateControllerSelector<S, Value> _selector;
   final StateControllerFilter<Value>? _test;
   bool get _isDisposed => _controller.isDisposed;
   bool _subscribed = false;
 
-  late Value _$value = _selector(_controller);
+  late Value _$value = _selector(_controller.state);
 
   @override
-  Value get value => _subscribed ? _$value : _$value = _selector(_controller);
+  Value get value =>
+      _subscribed ? _$value : _$value = _selector(_controller.state);
 
   void _update() {
-    final newValue = _selector(_controller);
+    final newValue = _selector(_controller.state);
     if (identical(_$value, newValue)) return;
     if (!(_test?.call(_$value, newValue) ?? true)) return;
     _$value = newValue;
@@ -134,7 +139,7 @@ final class _StateController$ValueListenableSelect<C extends IStateController,
   void addListener(VoidCallback listener) {
     if (_isDisposed) return;
     if (!_subscribed) {
-      _$value = _selector(_controller);
+      _$value = _selector(_controller.state);
       _controller.addListener(_update);
       _subscribed = true;
     }

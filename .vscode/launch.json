@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run app (DEV) [debug]",
+      "name": "[debug] Run app (development)",
       "type": "dart",
       "request": "launch",
       "cwd": "${workspaceFolder}/example",
