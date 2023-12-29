@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run App (Debug)",
+      "name": "[debug] Run app (development)",
       "type": "dart",
       "request": "launch",
       "cwd": "${workspaceFolder}/example",
@@ -12,6 +12,27 @@
         "--dart-define=octopus.measure=false"
       ],
       "env": {}
+    },
+    {
+      "name": "Flutter Test (VM)",
+      "request": "launch",
+      "type": "dart",
+      "program": "test/control_test.dart",
+      "env": {
+        "ENVIRONMENT": "test"
+      },
+      "console": "debugConsole",
+      "runTestsOnDevice": false,
+      "templateFor": "test",
+      "toolArgs": [
+        "--color",
+        "--reporter=expanded",
+        "--file-reporter=json:.coverage/tests.json",
+        "--timeout=30s",
+        "--concurrency=12"
+        /* "--name=handles failed connection attempts" */
+      ],
+      "args": []
     }
   ]
 }

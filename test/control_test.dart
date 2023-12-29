@@ -1,12 +1,16 @@
+// ignore_for_file: unnecessary_lambdas
+
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:control/control.dart';
+import 'unit/state_controller_test.dart' as state_controller_test;
+import 'widget/controller_scope_test.dart' as state_scope_test;
 
 void main() {
-  test('adds one to input values', () {
-    final calculator = Calculator();
-    expect(calculator.addOne(2), 3);
-    expect(calculator.addOne(-7), -6);
-    expect(calculator.addOne(0), 1);
+  group('unit', () {
+    state_controller_test.main();
+  });
+
+  group('widget', () {
+    state_scope_test.main();
   });
 }

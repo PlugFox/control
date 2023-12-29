@@ -1,39 +1,45 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Control: State Management for Flutter
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
+[![Pub](https://img.shields.io/pub/v/control.svg)](https://pub.dev/packages/control)
+[![Actions Status](https://github.com/PlugFox/control/actions/workflows/checkout.yml/badge.svg)](https://github.com/PlugFox/control/actions)
+[![Coverage](https://codecov.io/gh/PlugFox/control/branch/master/graph/badge.svg)](https://codecov.io/gh/PlugFox/control)
+[![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
+[![Linter](https://img.shields.io/badge/style-linter-40c4ff.svg)](https://pub.dev/packages/linter)
+[![GitHub stars](https://img.shields.io/github/stars/plugfox/control?style=social)](https://github.com/plugfox/control/)
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
+---
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Installation
 
-## Features
+Add the following dependency to your `pubspec.yaml` file:
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```yaml
+dependencies:
+  control: <version>
 ```
 
-## Additional information
+## Coverage
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+[![](https://codecov.io/gh/PlugFox/control/branch/master/graphs/sunburst.svg)](https://codecov.io/gh/PlugFox/control/branch/master)
+
+## Changelog
+
+Refer to the [Changelog](https://github.com/PlugFox/control/blob/master/CHANGELOG.md) to get all release notes.
+
+## Maintainers
+
+- [Matiunin Mikhail aka Plague Fox](https://plugfox.dev)
+
+## Funding
+
+If you want to support the development of our library, there are several ways you can do it:
+
+- [Buy me a coffee](https://www.buymeacoffee.com/plugfox)
+- [Support on Patreon](https://www.patreon.com/plugfox)
+- [Subscribe through Boosty](https://boosty.to/plugfox)
+
+We appreciate any form of support, whether it's a financial donation or just a star on GitHub. It helps us to continue developing and improving our library. Thank you for your support!
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT)
