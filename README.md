@@ -18,6 +18,32 @@ dependencies:
   control: <version>
 ```
 
+## Example
+
+```dart
+/// Counter state for [CounterController]
+typedef CounterState = ({int count, bool idle});
+
+/// Counter controller
+final class CounterController extends StateController<CounterState>
+    with SequentialControllerHandler {
+  CounterController({CounterState? initialState})
+      : super(initialState: initialState ?? (idle: true, count: 0));
+
+  void add(int value) => handle(() async {
+        setState((idle: false, count: state.count));
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+        setState((idle: true, count: state.count + value));
+      });
+
+  void subtract(int value) => handle(() async {
+        setState((idle: false, count: state.count));
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+        setState((idle: true, count: state.count - value));
+      });
+}
+```
+
 ## Coverage
 
 [![](https://codecov.io/gh/PlugFox/control/branch/master/graphs/sunburst.svg)](https://codecov.io/gh/PlugFox/control/branch/master)

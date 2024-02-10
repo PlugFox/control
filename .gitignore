@@ -45,3 +45,6 @@ coverage/
 # Temp
 /tmp
 /temp
+
+# FVM
+.fvm/flutter_sdk
