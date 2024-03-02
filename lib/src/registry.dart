@@ -6,17 +6,14 @@ import 'package:meta/meta.dart';
 /// StateRegistry Singleton class
 /// Used to register and retrieve the state controllers at debug mode
 /// to track the state of the controllers and leaks in the application.
-/// {@nodoc}
 @internal
 final class ControllerRegistry with ControllerRegistry$Global {
-  /// {@nodoc}
   factory ControllerRegistry() => _internalSingleton;
   ControllerRegistry._internal();
   static final ControllerRegistry _internalSingleton =
       ControllerRegistry._internal();
 }
 
-/// {@nodoc}
 @internal
 base mixin ControllerRegistry$Global {
   late final Map<Type, List<WeakReference<IController>>> _globalRegistry =

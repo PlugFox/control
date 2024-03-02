@@ -18,11 +18,62 @@ base mixin ConcurrentControllerHandler on Controller {
   @override
   @protected
   @mustCallSuper
-  void handle(
-    FutureOr<void> Function() handler, [
-    FutureOr<void> Function(Object error, StackTrace stackTrace)? errorHandler,
-    FutureOr<void> Function()? doneHandler,
-  ]) =>
+  FutureOr<void> handle(
+    FutureOr<void> Function() handler, {
+    FutureOr<void> Function(Object error, StackTrace stackTrace)? error,
+    FutureOr<void> Function()? done,
+  }) {
+    if (isDisposed) return Future<void>.value(null);
+    _$processingCalls++;
+    final completer = _done ??= Completer<void>();
+    var isDone = false; // ignore error callback after done
+
+    Future<void> onError(Object e, StackTrace st) async {
+      try {
+        super.onError(e, st);
+        if (isDone || isDisposed || completer.isCompleted) return;
+        await error?.call(e, st);
+      } on Object catch (error, stackTrace) {
+        super.onError(error, stackTrace);
+      }
+    }
+
+    void onDone() {
+      if (completer.isCompleted) return;
+      _$processingCalls--;
+      if (_$processingCalls != 0) return;
+      completer.complete();
+      _done = null;
+    }
+
+    runZonedGuarded<void>(
+      () async {
+        try {
+          await handler();
+        } on Object catch (error, stackTrace) {
+          await onError(error, stackTrace);
+        } finally {
+          isDone = true;
+          try {
+            await done?.call();
+          } on Object catch (error, stackTrace) {
+            super.onError(error, stackTrace);
+          }
+          onDone();
+        }
+      },
+      onError,
+    );
+  }
+
+  /* @override
+  @protected
+  @mustCallSuper
+  FutureOr<void> handle(
+    FutureOr<void> Function() handler, {
+    FutureOr<void> Function(Object error, StackTrace stackTrace)? error,
+    FutureOr<void> Function()? done,
+  }) =>
       runZonedGuarded<void>(
         () async {
           if (isDisposed) return;
@@ -30,14 +81,15 @@ base mixin ConcurrentControllerHandler on Controller {
           _done ??= Completer<void>.sync();
           try {
             await handler();
-          } on Object catch (error, stackTrace) {
-            onError(error, stackTrace);
+          } on Object catch (e, st) {
+            onError(e, st);
             await Future<void>(() async {
-              await errorHandler?.call(error, stackTrace);
+              await error?.call(e, st);
             }).catchError(onError);
           } finally {
+            isDone = true;
             await Future<void>(() async {
-              await doneHandler?.call();
+              await done?.call();
             }).catchError(onError);
             _$processingCalls--;
             if (_$processingCalls == 0) {
@@ -50,5 +102,5 @@ base mixin ConcurrentControllerHandler on Controller {
           }
         },
         onError,
-      );
+      ); */
 }

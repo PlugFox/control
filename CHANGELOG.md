@@ -1,3 +1,7 @@
+## 0.0.3-pre.1
+
+- **BREAKING CHANGE**: Change `handler` api and implementation
+
 ## 0.0.2
 
 - Add example to README.md

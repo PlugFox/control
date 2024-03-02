@@ -15,7 +15,6 @@ typedef StateControllerFilter<Value> = bool Function(Value prev, Value next);
 ///
 /// Do not implement this interface directly, instead extend [StateController].
 ///
-/// {@nodoc}
 @internal
 abstract interface class IStateController<S extends Object>
     implements IController {
@@ -36,7 +35,7 @@ abstract base class StateController<S extends Object> extends Controller
 
   /// Emit a new state, usually based on [state] and some additional logic.
   @protected
-  @nonVirtual
+  @mustCallSuper
   void setState(S state) {
     runZonedGuarded<void>(
       () => Controller.observer?.onStateChanged(this, _$state, state),

@@ -11,7 +11,6 @@ import 'package:meta/meta.dart';
 ///
 /// Do not implement this interface directly, instead extend [Controller].
 ///
-/// {@nodoc}
 @internal
 abstract interface class IController implements Listenable {
   /// Whether the controller is permanently disposed
@@ -92,7 +91,7 @@ abstract base class Controller with ChangeNotifier implements IController {
 
   /// State change handler
   @protected
-  void handle(FutureOr<void> Function() handler);
+  FutureOr<void> handle(FutureOr<void> Function() handler);
 
   @protected
   @nonVirtual

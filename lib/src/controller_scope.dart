@@ -76,11 +76,9 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
   InheritedElement createElement() => ControllerScope$Element<C>(this);
 }
 
-/// {@nodoc}
 @internal
 final class ControllerScope$Element<C extends Listenable>
     extends InheritedElement {
-  /// {@nodoc}
   ControllerScope$Element(ControllerScope<C> widget) : super(widget);
 
   @nonVirtual
@@ -219,13 +217,11 @@ final class ControllerScope$Element<C extends Listenable>
   }
 }
 
-/// {@nodoc}
 @immutable
 sealed class _ControllerDependency<C extends Listenable> {
   const _ControllerDependency();
 }
 
-/// {@nodoc}
 final class _ControllerDependency$Create<C extends Listenable>
     extends _ControllerDependency<C> {
   const _ControllerDependency$Create(
@@ -243,7 +239,6 @@ final class _ControllerDependency$Create<C extends Listenable>
       identical(this, other) || other is _ControllerDependency$Create;
 }
 
-/// {@nodoc}
 final class _ControllerDependency$Value<C extends Listenable>
     extends _ControllerDependency<C> {
   const _ControllerDependency$Value({required this.controller});
