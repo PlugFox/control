@@ -20,10 +20,10 @@ base mixin SequentialControllerHandler on Controller {
   @override
   @protected
   @mustCallSuper
-  FutureOr<void> handle(
-    FutureOr<void> Function() handler, {
-    FutureOr<void> Function(Object error, StackTrace stackTrace)? error,
-    FutureOr<void> Function()? done,
+  Future<void> handle(
+    Future<void> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? error,
+    Future<void> Function()? done,
   }) =>
       _eventQueue.push<void>(
         () {
@@ -77,7 +77,7 @@ final class _ControllerEventQueue {
   int get length => _queue.length;
 
   /// Push it at the end of the queue.
-  Future<T> push<T>(FutureOr<T> Function() fn) {
+  Future<T> push<T>(Future<T> Function() fn) {
     final task = _SequentialTask<T>(fn);
     _queue.add(task);
     _exec();
@@ -87,7 +87,7 @@ final class _ControllerEventQueue {
   /// Mark the queue as closed.
   /// The queue will be processed until it's empty.
   /// But all new and current events will be rejected with [WSClientClosed].
-  FutureOr<void> close() async {
+  Future<void> close() async {
     _isClosed = true;
     await _processing;
   }
@@ -118,17 +118,17 @@ final class _ControllerEventQueue {
 }
 
 class _SequentialTask<T> {
-  _SequentialTask(FutureOr<T> Function() fn)
+  _SequentialTask(Future<T> Function() fn)
       : _fn = fn,
         _completer = Completer<T>();
 
   final Completer<T> _completer;
 
-  final FutureOr<T> Function() _fn;
+  final Future<T> Function() _fn;
 
   Future<T> get future => _completer.future;
 
-  FutureOr<T> call() async {
+  Future<T> call() async {
     final result = await _fn();
     if (!_completer.isCompleted) {
       _completer.complete(result);

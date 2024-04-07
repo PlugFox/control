@@ -91,7 +91,7 @@ abstract base class Controller with ChangeNotifier implements IController {
 
   /// State change handler
   @protected
-  FutureOr<void> handle(FutureOr<void> Function() handler);
+  Future<void> handle(Future<void> Function() handler);
 
   @protected
   @nonVirtual

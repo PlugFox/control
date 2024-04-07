@@ -1,3 +1,7 @@
+## 0.1.0
+
+- **BREAKING CHANGE**: Replace FutureOr with Future in handler
+
 ## 0.0.3-pre.1
 
 - **BREAKING CHANGE**: Change `handler` api and implementation

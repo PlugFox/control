@@ -18,10 +18,10 @@ base mixin DroppableControllerHandler on Controller {
   @override
   @protected
   @mustCallSuper
-  FutureOr<void> handle(
-    FutureOr<void> Function() handler, {
-    FutureOr<void> Function(Object error, StackTrace stackTrace)? error,
-    FutureOr<void> Function()? done,
+  Future<void> handle(
+    Future<void> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? error,
+    Future<void> Function()? done,
   }) {
     if (isDisposed || isProcessing) return Future<void>.value(null);
     _$processingCalls++;
@@ -64,5 +64,7 @@ base mixin DroppableControllerHandler on Controller {
       },
       onError,
     );
+
+    return completer.future;
   }
 }
