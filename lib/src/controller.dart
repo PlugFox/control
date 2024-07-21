@@ -32,12 +32,15 @@ abstract interface class IController implements Listenable {
   /// This method should only be called by the object's owner.
   void dispose();
 
-  /// Handles request in the controller.
+  /// Handles invocation in the controller.
   ///
   /// Depending on the implementation, the handler may be executed
   /// sequentially, concurrently, dropped and etc.
-  /// See [ConcurrentControllerHandler], [SequentialControllerHandler],
-  /// [DroppableControllerHandler] for more details.
+  ///
+  /// See:
+  ///  - [ConcurrentControllerHandler] - handler that executes concurrently
+  ///  - [SequentialControllerHandler] - handler that executes sequentially
+  ///  - [DroppableControllerHandler] - handler that drops the request when busy
   void handle(Future<void> Function() handler);
 }
 
