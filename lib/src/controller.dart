@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:control/control.dart';
 import 'package:control/src/registry.dart';
-import 'package:control/src/state_controller.dart';
 import 'package:flutter/foundation.dart'
     show ChangeNotifier, Listenable, VoidCallback;
 import 'package:meta/meta.dart';
@@ -10,7 +10,6 @@ import 'package:meta/meta.dart';
 /// the connection of widgets and the date of the layer.
 ///
 /// Do not implement this interface directly, instead extend [Controller].
-///
 @internal
 abstract interface class IController implements Listenable {
   /// Whether the controller is permanently disposed
@@ -32,6 +31,17 @@ abstract interface class IController implements Listenable {
   ///
   /// This method should only be called by the object's owner.
   void dispose();
+
+  /// Handles invocation in the controller.
+  ///
+  /// Depending on the implementation, the handler may be executed
+  /// sequentially, concurrently, dropped and etc.
+  ///
+  /// See:
+  ///  - [ConcurrentControllerHandler] - handler that executes concurrently
+  ///  - [SequentialControllerHandler] - handler that executes sequentially
+  ///  - [DroppableControllerHandler] - handler that drops the request when busy
+  void handle(Future<void> Function() handler);
 }
 
 /// Controller observer
@@ -89,8 +99,8 @@ abstract base class Controller with ChangeNotifier implements IController {
         (error, stackTrace) {/* ignore */},
       );
 
-  /// State change handler
   @protected
+  @override
   Future<void> handle(Future<void> Function() handler);
 
   @protected
