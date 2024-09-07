@@ -1,7 +1,7 @@
-import 'package:control/src/controller_scope.dart';
-import 'package:control/src/sequential_controller_handler.dart';
-import 'package:control/src/state_consumer.dart';
-import 'package:control/src/state_controller.dart';
+import 'package:control/src/core/state_controller.dart';
+import 'package:control/src/handlers/sequential_controller_handler.dart';
+import 'package:control/src/widget/controller_scope.dart';
+import 'package:control/src/widget/state_consumer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

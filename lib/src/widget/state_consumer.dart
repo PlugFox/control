@@ -1,5 +1,5 @@
-import 'package:control/src/controller_scope.dart';
-import 'package:control/src/state_controller.dart';
+import 'package:control/src/core/state_controller.dart';
+import 'package:control/src/widget/controller_scope.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';

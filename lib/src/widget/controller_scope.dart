@@ -1,5 +1,5 @@
-import 'package:control/src/controller.dart';
-import 'package:control/src/state_controller.dart';
+import 'package:control/src/core/controller.dart';
+import 'package:control/src/core/state_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
@@ -51,7 +51,7 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
     final element =
         context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
     if (listen && element != null) context.dependOnInheritedElement(element);
-    return element is ControllerScope$Element<C> ? element.controller : null;
+    return element is _ControllerScope$Element<C> ? element.controller : null;
   }
 
   static Never _notFoundInheritedWidgetOfExactType() => throw ArgumentError(
@@ -73,13 +73,12 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
       _dependency != oldWidget._dependency;
 
   @override
-  InheritedElement createElement() => ControllerScope$Element<C>(this);
+  InheritedElement createElement() => _ControllerScope$Element<C>(this);
 }
 
-@internal
-final class ControllerScope$Element<C extends Listenable>
+final class _ControllerScope$Element<C extends Listenable>
     extends InheritedElement {
-  ControllerScope$Element(ControllerScope<C> widget) : super(widget);
+  _ControllerScope$Element(ControllerScope<C> widget) : super(widget);
 
   @nonVirtual
   _ControllerDependency<C> get _dependency =>
