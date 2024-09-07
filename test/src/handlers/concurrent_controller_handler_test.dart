@@ -5,10 +5,19 @@ void main() {
   group(
     'ConcurrentControllerHandler',
     () {
+      late _FakeController controller;
+
+      setUp(() {
+        controller = _FakeController();
+      });
+
+      tearDown(() {
+        controller.dispose();
+      });
+
       test(
         'should execute operations concurrently',
         () async {
-          final controller = _FakeController();
           expect(controller.isProcessing, isFalse);
           expect(controller.state, 0);
 
@@ -37,6 +46,36 @@ void main() {
           expect(stopwatch.elapsedMilliseconds, lessThan(200));
         },
       );
+
+      test('should maintain correct state after mixed operations', () async {
+        final futures = <Future<void>>[
+          controller.increment(),
+          controller.increment(),
+          controller.decrement(),
+          controller.increment(),
+        ];
+
+        await Future.wait(futures);
+
+        expect(controller.state, 2);
+      });
+
+      test('should handle rapid successive calls', () async {
+        for (var i = 0; i < 100; i++) {
+          controller.increment().ignore();
+        }
+
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        expect(controller.state, 100);
+      });
+
+      test('should reset isProcessing after all operations complete', () async {
+        final future = controller.increment();
+        expect(controller.isProcessing, isTrue);
+
+        await expectLater(future, completes);
+        expect(controller.isProcessing, isFalse);
+      });
     },
   );
 }
