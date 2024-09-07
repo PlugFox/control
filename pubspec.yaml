@@ -41,10 +41,10 @@ dependencies:
   flutter:
     sdk: flutter
   meta: ^1.0.0
-  mockito: ^5.4.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mockito: ^5.4.4
   flutter_lints: ^2.0.0
   build_runner: ^2.4.11
