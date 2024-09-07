@@ -1,18 +1,30 @@
 import 'package:control/control.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+@GenerateNiceMocks([
+  MockSpec<IControllerObserver>(),
+])
+import 'concurrent_controller_handler_test.mocks.dart';
 
 void main() {
   group(
     'ConcurrentControllerHandler',
     () {
       late _FakeController controller;
+      late MockIControllerObserver observer;
 
       setUp(() {
         controller = _FakeController();
+        observer = MockIControllerObserver();
+        Controller.observer = observer;
       });
 
       tearDown(() {
         controller.dispose();
+        Controller.observer = null;
+        reset(observer);
       });
 
       test(
@@ -56,7 +68,6 @@ void main() {
         ];
 
         await Future.wait(futures);
-
         expect(controller.state, 2);
       });
 
@@ -75,6 +86,30 @@ void main() {
 
         await expectLater(future, completes);
         expect(controller.isProcessing, isFalse);
+      });
+
+      test('should handle errors', () async {
+        final future = controller.throwError();
+        expect(controller.isProcessing, isTrue);
+
+        await expectLater(future, completes);
+        expect(controller.isProcessing, isFalse);
+
+        verify(observer.onError(controller, any, any)).called(1);
+      });
+
+      test('should handle errors when observer throws', () async {
+        when(
+          observer.onError(controller, any, any),
+        ).thenThrow(Exception('Error'));
+
+        final future = controller.throwError();
+        expect(controller.isProcessing, isTrue);
+
+        await expectLater(future, completes);
+        expect(controller.isProcessing, isFalse);
+
+        verify(observer.onError(controller, any, any)).called(1);
       });
     },
   );
