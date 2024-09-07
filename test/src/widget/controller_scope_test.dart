@@ -6,98 +6,95 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() => group('ControllerScope', () {
-      _$valueGroup();
-      _$createGroup();
-    });
-
-void _$valueGroup() => group('ControllerScope.value', () {
-      test('constructor', () {
-        expect(
-          () => ControllerScope(_FakeController.new),
-          returnsNormally,
-        );
-        expect(
-          ControllerScope(_FakeController.new),
-          isA<ControllerScope>(),
-        );
-      });
-
-      testWidgets(
-        'inject_and_recive',
-        (tester) async {
-          final controller = _FakeController();
-          await tester.pumpWidget(
-            _appContext(
-              child: ControllerScope.value(
-                controller,
-                child: StateConsumer(
-                  controller: controller,
-                  builder: (context, state, child) => Text('$state'),
-                ),
-              ),
-            ),
-          );
-          await tester.pumpAndSettle();
-          expect(find.text('0'), findsOneWidget);
-          expect(find.text('1'), findsNothing);
-          controller.add(1);
-          await tester.pumpAndSettle();
-          expect(find.text('0'), findsNothing);
-          expect(find.text('1'), findsOneWidget);
-          controller.subtract(2);
-          await tester.pumpAndSettle();
-          expect(controller.state, equals(-1));
-          expect(find.text('-1'), findsOneWidget);
-          controller.dispose();
-        },
-      );
-    });
-
-void _$createGroup() => group('ControllerScope.create', () {
-      test('constructor', () {
-        expect(
-          () => ControllerScope(_FakeController.new),
-          returnsNormally,
-        );
-        expect(
-          ControllerScope(_FakeController.new),
-          isA<ControllerScope>(),
-        );
-      });
-
-      testWidgets(
-        'inject_and_recive',
-        (tester) async {
-          await tester.pumpWidget(
-            _appContext(
-              child: ControllerScope<_FakeController>(
-                _FakeController.new,
-                child: StateConsumer<_FakeController, int>(
-                  builder: (context, state, child) => Text('$state'),
-                ),
-              ),
-            ),
-          );
-          await tester.pumpAndSettle();
-          expect(find.text('0'), findsOneWidget);
-          expect(find.text('1'), findsNothing);
-          final context = tester
-              .firstElement(find.byType(ControllerScope<_FakeController>));
-          final controller = ControllerScope.of<_FakeController>(context);
+      group('ControllerScope.value', () {
+        test('constructor', () {
           expect(
-              controller,
-              isA<_FakeController>()
-                  .having((c) => c.state, 'state', equals(0)));
-          controller.add(1);
-          await tester.pumpAndSettle();
-          expect(find.text('0'), findsNothing);
-          expect(find.text('1'), findsOneWidget);
-          controller.subtract(2);
-          await tester.pumpAndSettle();
-          expect(controller.state, equals(-1));
-          expect(find.text('-1'), findsOneWidget);
-        },
-      );
+            () => ControllerScope(_FakeController.new),
+            returnsNormally,
+          );
+          expect(
+            ControllerScope(_FakeController.new),
+            isA<ControllerScope>(),
+          );
+        });
+
+        testWidgets(
+          'inject_and_recive',
+          (tester) async {
+            final controller = _FakeController();
+            await tester.pumpWidget(
+              _appContext(
+                child: ControllerScope.value(
+                  controller,
+                  child: StateConsumer(
+                    controller: controller,
+                    builder: (context, state, child) => Text('$state'),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(find.text('0'), findsOneWidget);
+            expect(find.text('1'), findsNothing);
+            controller.add(1);
+            await tester.pumpAndSettle();
+            expect(find.text('0'), findsNothing);
+            expect(find.text('1'), findsOneWidget);
+            controller.subtract(2);
+            await tester.pumpAndSettle();
+            expect(controller.state, equals(-1));
+            expect(find.text('-1'), findsOneWidget);
+            controller.dispose();
+          },
+        );
+      });
+
+      group('ControllerScope.create', () {
+        test('constructor', () {
+          expect(
+            () => ControllerScope(_FakeController.new),
+            returnsNormally,
+          );
+          expect(
+            ControllerScope(_FakeController.new),
+            isA<ControllerScope>(),
+          );
+        });
+
+        testWidgets(
+          'inject_and_recive',
+          (tester) async {
+            await tester.pumpWidget(
+              _appContext(
+                child: ControllerScope<_FakeController>(
+                  _FakeController.new,
+                  child: StateConsumer<_FakeController, int>(
+                    builder: (context, state, child) => Text('$state'),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(find.text('0'), findsOneWidget);
+            expect(find.text('1'), findsNothing);
+            final context = tester
+                .firstElement(find.byType(ControllerScope<_FakeController>));
+            final controller = ControllerScope.of<_FakeController>(context);
+            expect(
+                controller,
+                isA<_FakeController>()
+                    .having((c) => c.state, 'state', equals(0)));
+            controller.add(1);
+            await tester.pumpAndSettle();
+            expect(find.text('0'), findsNothing);
+            expect(find.text('1'), findsOneWidget);
+            controller.subtract(2);
+            await tester.pumpAndSettle();
+            expect(controller.state, equals(-1));
+            expect(find.text('-1'), findsOneWidget);
+          },
+        );
+      });
     });
 
 /// Basic wrapper for the current widgets.
