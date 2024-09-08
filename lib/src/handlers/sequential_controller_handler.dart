@@ -149,17 +149,21 @@ class SequentialControllerEventQueue {
 
 /// Represents a task in the sequential queue.
 class SequentialEventQueueTask<T> {
+  /// Creates a new [SequentialEventQueueTask] with the given task.
   SequentialEventQueueTask(this._task);
   final Future<T> Function() _task;
   final _completer = Completer<T>();
 
+  /// The future that completes when the task is done.
   Future<T> get future => _completer.future;
 
+  /// Calls the task and completes the future with the result.
   Future<void> call() async {
     final result = await _task();
     _completer.complete(result);
   }
 
+  /// Completes the future with an error.
   void reject(Object error, StackTrace stackTrace) {
     if (!_completer.isCompleted) {
       _completer.completeError(error, stackTrace);
