@@ -155,6 +155,22 @@ void main() {
           await expectLater(eventQueue.push(task), throwsA(isA<Exception>()));
         },
       );
+
+      test(
+        'when processing in queue finishes, it should be empty',
+        () async {
+          final eventQueue = SequentialControllerEventQueue();
+
+          unawaited(eventQueue.push(() async {}));
+          unawaited(eventQueue.push(() async {}));
+
+          expect(eventQueue.length, 2);
+
+          await eventQueue.processing;
+
+          expect(eventQueue.length, 0);
+        },
+      );
     },
   );
 }
