@@ -8,7 +8,8 @@ import 'package:meta/meta.dart';
 /// This mixin should be used on classes that extend [Controller].
 base mixin SequentialControllerHandler on Controller {
   // The event queue for sequential execution.
-  final _ControllerEventQueue _eventQueue = _ControllerEventQueue();
+  final SequentialControllerEventQueue _eventQueue =
+      SequentialControllerEventQueue();
 
   @override
   @nonVirtual
@@ -88,9 +89,9 @@ base mixin SequentialControllerHandler on Controller {
 }
 
 /// A queue for managing sequential execution of controller events.
-class _ControllerEventQueue {
-  final DoubleLinkedQueue<_SequentialTask<Object?>> _queue =
-      DoubleLinkedQueue<_SequentialTask<Object?>>();
+class SequentialControllerEventQueue {
+  final DoubleLinkedQueue<SequentialEventQueueTask<Object?>> _queue =
+      DoubleLinkedQueue<SequentialEventQueueTask<Object?>>();
   Future<void>? _processing;
   bool _isClosed = false;
 
@@ -109,7 +110,7 @@ class _ControllerEventQueue {
       throw StateError('Cannot push to a closed queue');
     }
 
-    final sequentialTask = _SequentialTask<T>(task);
+    final sequentialTask = SequentialEventQueueTask<T>(task);
     _queue.add(sequentialTask);
     _startProcessing();
 
@@ -147,8 +148,8 @@ class _ControllerEventQueue {
 }
 
 /// Represents a task in the sequential queue.
-class _SequentialTask<T> {
-  _SequentialTask(this._task);
+class SequentialEventQueueTask<T> {
+  SequentialEventQueueTask(this._task);
   final Future<T> Function() _task;
   final _completer = Completer<T>();
 

@@ -2,14 +2,9 @@ import 'dart:async';
 
 import 'package:control/control.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-@GenerateNiceMocks([
-  MockSpec<IControllerObserver>(),
-])
-import 'concurrent_controller_handler_test.mocks.dart';
-import 'fake_controller.dart';
+import 'handler_utils.dart';
 
 void main() {
   group(

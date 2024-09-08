@@ -1,6 +1,12 @@
 import 'dart:async';
 
 import 'package:control/control.dart';
+import 'package:mockito/annotations.dart';
+
+@GenerateNiceMocks([
+  MockSpec<IControllerObserver>(),
+])
+export 'handler_utils.mocks.dart';
 
 abstract base class FakeTestController extends Controller {
   int _state = 0;

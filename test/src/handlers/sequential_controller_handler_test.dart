@@ -1,15 +1,11 @@
 import 'dart:async';
 
 import 'package:control/control.dart';
+import 'package:control/src/handlers/sequential_controller_handler.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'fake_controller.dart';
-@GenerateNiceMocks([
-  MockSpec<IControllerObserver>(),
-])
-import 'sequential_controller_handler_test.mocks.dart';
+import 'handler_utils.dart';
 
 void main() {
   group(
@@ -143,6 +139,20 @@ void main() {
           verify(
             observer.onError(controller, any, any),
           ).called(1);
+        },
+      );
+
+      test(
+        'error in SequentialControllerEventQueue',
+        () async {
+          final eventQueue = SequentialControllerEventQueue();
+
+          Future<void> task() => Future<void>.delayed(
+                const Duration(milliseconds: 100),
+                () => throw Exception('Error'),
+              );
+
+          await expectLater(eventQueue.push(task), throwsA(isA<Exception>()));
         },
       );
     },
