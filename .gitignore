@@ -48,3 +48,6 @@ coverage/
 
 # FVM
 .fvm/flutter_sdk
+
+# Generated files
+*.*.dart
