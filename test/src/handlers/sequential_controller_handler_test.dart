@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:control/control.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
+import 'fake_controller.dart';
 @GenerateNiceMocks([
   MockSpec<IControllerObserver>(),
 ])
@@ -72,35 +75,6 @@ void main() {
       );
 
       test(
-        'handles error in onDone',
-        () async {
-          expect(controller.isProcessing, isFalse);
-          expect(controller.state, 0);
-
-          final incrementFuture = controller.increment();
-          expect(controller.isProcessing, isTrue);
-          expect(controller.state, 0);
-
-          await expectLater(incrementFuture, completes);
-          expect(controller.isProcessing, isFalse);
-          expect(controller.state, 1);
-
-          final throwFuture = controller.throwErrorOnDone();
-
-          expect(controller.isProcessing, isTrue);
-          expect(controller.state, 1);
-
-          await expectLater(throwFuture, completes);
-          expect(controller.isProcessing, isFalse);
-          expect(controller.state, 1);
-
-          verify(
-            observer.onError(controller, any, any),
-          ).called(2);
-        },
-      );
-
-      test(
         'handles an error when observer throws',
         () async {
           when(
@@ -139,54 +113,41 @@ void main() {
           expect(controller.state, 0);
         },
       );
+
+      test(
+        'handles an error when handle spawns unawaited future',
+        () async {
+          expect(controller.isProcessing, isFalse);
+          expect(controller.state, 0);
+
+          Object zoneError = 0;
+
+          await runZonedGuarded(
+            controller.throwUnawaited,
+            (err, stack) => zoneError = err,
+          );
+
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+
+          expect(
+            zoneError,
+            isA<AssertionError>(),
+            reason: 'The error must be raised when an unawaited future '
+                'is spawned',
+          );
+
+          expect(controller.isProcessing, isFalse);
+          expect(controller.state, 0);
+
+          // Reported to observer once
+          verify(
+            observer.onError(controller, any, any),
+          ).called(1);
+        },
+      );
     },
   );
 }
 
-final class _FakeController extends StateController<int>
-    with SequentialControllerHandler {
-  _FakeController() : super(initialState: 0);
-
-  /// Increments the state by one.
-  Future<void> increment() => handle(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        setState(state + 1);
-      });
-
-  /// Decrements the state by one.
-  Future<void> decrement() => handle(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        setState(state - 1);
-      });
-
-  /// Throws an error.
-  Future<void> throwError() => handle(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        throw Exception('Error');
-      });
-
-  /// Throws an error in onDone.
-  Future<void> throwErrorOnDone() => handle(
-        () async {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          throw Exception('Error');
-        },
-        onDone: () async {
-          throw Exception('Error in onDone');
-        },
-      );
-
-  /// Throws an error in onError, onDone, and the main handler.
-  Future<void> throwErrorEverywhere() => handle(
-        () async {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          throw Exception('Error');
-        },
-        onError: (error, stackTrace) async {
-          throw Exception('Error in onError');
-        },
-        onDone: () async {
-          throw Exception('Error in onDone');
-        },
-      );
-}
+final class _FakeController = FakeTestController
+    with SequentialControllerHandler;

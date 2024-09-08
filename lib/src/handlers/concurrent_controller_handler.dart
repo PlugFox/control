@@ -39,17 +39,38 @@ base mixin ConcurrentControllerHandler on Controller {
       }
     }
 
-    try {
-      await handler();
-    } on Object catch (error, stackTrace) {
-      await handleError(error, stackTrace);
-    } finally {
-      try {
-        await onDone?.call();
-      } on Object catch (error, stackTrace) {
-        super.onError(error, stackTrace);
-      }
+    Future<void> handleZoneError(
+      Object error,
+      StackTrace stackTrace,
+    ) async {
+      if (isDisposed) return;
+      super.onError(error, stackTrace);
+
+      assert(
+        false,
+        'A zone error occurred during controller event handling. '
+        'This may be caused by an unawaited future. '
+        'Make sure to await all futures in the controller '
+        'event handlers.',
+      );
     }
+
+    await runZonedGuarded(
+      () async {
+        try {
+          await handler();
+        } on Object catch (error, stackTrace) {
+          await handleError(error, stackTrace);
+        } finally {
+          try {
+            await onDone?.call();
+          } on Object catch (error, stackTrace) {
+            super.onError(error, stackTrace);
+          }
+        }
+      },
+      handleZoneError,
+    );
 
     _processingCalls--;
   }

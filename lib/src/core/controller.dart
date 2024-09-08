@@ -23,7 +23,11 @@ abstract interface class IController implements Listenable {
   ///  - [ConcurrentControllerHandler] - handler that executes concurrently
   ///  - [SequentialControllerHandler] - handler that executes sequentially
   ///  - [DroppableControllerHandler] - handler that drops the request when busy
-  void handle(Future<void> Function() handler);
+  Future<void> handle(
+    Future<void> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? onError,
+    Future<void> Function()? onDone,
+  });
 
   /// Whether the controller has been permanently disposed.
   bool get isDisposed;

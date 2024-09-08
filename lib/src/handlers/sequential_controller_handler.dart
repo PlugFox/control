@@ -45,17 +45,38 @@ base mixin SequentialControllerHandler on Controller {
             }
           }
 
-          try {
-            await handler();
-          } on Object catch (error, stackTrace) {
-            await handleError(error, stackTrace);
-          } finally {
-            try {
-              await onDone?.call();
-            } on Object catch (error, stackTrace) {
-              super.onError(error, stackTrace);
-            }
+          Future<void> handleZoneError(
+            Object error,
+            StackTrace stackTrace,
+          ) async {
+            if (isDisposed) return;
+            super.onError(error, stackTrace);
+
+            assert(
+              false,
+              'A zone error occurred during controller event handling. '
+              'This may be caused by an unawaited future. '
+              'Make sure to await all futures in the controller '
+              'event handlers.',
+            );
           }
+
+          await runZonedGuarded(
+            () async {
+              try {
+                await handler();
+              } on Object catch (error, stackTrace) {
+                await handleError(error, stackTrace);
+              } finally {
+                try {
+                  await onDone?.call();
+                } on Object catch (error, stackTrace) {
+                  super.onError(error, stackTrace);
+                }
+              }
+            },
+            handleZoneError,
+          );
         },
       );
 
@@ -134,12 +155,8 @@ class _SequentialTask<T> {
   Future<T> get future => _completer.future;
 
   Future<void> call() async {
-    try {
-      final result = await _task();
-      _completer.complete(result);
-    } on Object catch (error, stackTrace) {
-      _completer.completeError(error, stackTrace);
-    }
+    final result = await _task();
+    _completer.complete(result);
   }
 
   void reject(Object error, StackTrace stackTrace) {
