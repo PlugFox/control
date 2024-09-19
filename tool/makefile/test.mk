@@ -7,8 +7,8 @@ integration:  ## Run integration tests
 .PHONY: test
 test:  ## Run unit tests
 				@flutter test test/control_test.dart --coverage || (echo "Error while running tests"; exit 1)
-				@genhtml coverage/lcov.info --output=coverage -o coverage/html || (echo "Error while running unit tests"; exit 2)
+				@genhtml coverage/lcov.info --output=.coverage -o .coverage/html || (echo "Error while running unit tests"; exit 2)
 
 .PHONY: genhtml
 genhtml: ## Generate coverage html
-				@genhtml coverage/lcov.info -o coverage/html
+				@genhtml coverage/lcov.info -o coverage/html || (echo "Error while running genhtml"; exit 1)
