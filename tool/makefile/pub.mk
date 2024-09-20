@@ -1,58 +1,57 @@
-.PHONY: version doctor clean get upgrade upgrade-major outdated dependencies format analyze check
-
-# Check flutter version
-version:
+.PHONY : version
+version: ## Check flutter version
 	@flutter --version
 
-# Check flutter doctor
-doctor:
+.PHONY : doctor
+doctor: ## Check flutter doctor
 	@flutter doctor
 
-# Clean all generated files
-clean:
+.PHONY : clean
+clean: ## Clean all generated files
 	@rm -rf coverage .dart_tool .packages pubspec.lock
 
-# Get dependencies
-get:
+.PHONY : get
+get: ## Get dependencies
 	@flutter pub get
 
+.PHONY : fix
 fix: format
 	@dart fix --apply lib
 
-# Generate all
-gen: codegen
+.PHONY : gen
+gen: codegen ## Generate all
 
-# Upgrade dependencies
-upgrade:
+.PHONY : upgrade
+upgrade: ## Upgrade dependencies
 	@flutter pub upgrade
 
-# Upgrade to major versions
-upgrade-major:
+.PHONY : upgrade-major
+upgrade-major: ## Upgrade to major versions
 	@flutter pub upgrade --major-versions
 
-# Check outdated dependencies
-outdated: get
+.PHONY : outdated
+outdated: get ## Check outdated dependencies
 	@flutter pub outdated
 
-# Check outdated dependencies
-dependencies: upgrade
+.PHONY : dependencies
+dependencies: upgrade ## Check outdated dependencies
 	@flutter pub outdated --dependency-overrides \
 		--dev-dependencies --prereleases --show-all --transitive
 
-# Format code
-format:
+.PHONY : format
+format: ## Format code
 	@dart format --fix -l 80 .
 
-# Analyze code
-analyze: get format
+.PHONY : analyze
+analyze: get format ## Analyze code
 	@dart analyze --fatal-infos --fatal-warnings
 
-# Check code
-check: analyze test
+.PHONY : check
+check: analyze test ## Check code
 	@dart pub publish --dry-run
 	@dart pub global activate pana
 	@pana --json --no-warning --line-length 80 > log.pana.json
 
-# Publish package
-publish:
+.PHONY : publish
+publish: ## Publish package
 	@dart pub publish

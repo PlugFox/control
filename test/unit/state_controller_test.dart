@@ -8,7 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() => group('StateController', () {
       _$concurrencyGroup();
+      _$exceptionalGroup();
       _$methodsGroup();
+      _$onErrorGroup();
     });
 
 void _$concurrencyGroup() => group('concurrency', () {
@@ -88,6 +90,171 @@ void _$concurrencyGroup() => group('concurrency', () {
       });
     });
 
+void _$onErrorGroup() => group('onError', () {
+      group('sequential', () {
+        test(
+            'should call onError and error callback '
+            'when an exception is thrown', () async {
+          final controller = _FakeControllerSequential();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() => doneCalled++;
+
+          controller.makeError(
+            onError: () async {
+              onError();
+              throw Exception();
+            },
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+        test(
+            'should execute handler, handle errors, '
+            'and call done callback within runZonedGuarded', () async {
+          final controller = _FakeControllerSequential();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() {
+            doneCalled++;
+            throw Exception();
+          }
+
+          controller.makeError(
+            onError: () async => onError(),
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+      });
+      group('droppable', () {
+        test(
+            'should call onError and error callback '
+            'when an exception is thrown', () async {
+          final controller = _FakeControllerDroppable();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() => doneCalled++;
+
+          controller.makeError(
+            onError: () async {
+              onError();
+              throw Exception();
+            },
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+        test(
+            'should execute handler, handle errors, '
+            'and call done callback within runZonedGuarded', () async {
+          final controller = _FakeControllerDroppable();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() {
+            doneCalled++;
+            throw Exception();
+          }
+
+          controller.makeError(
+            onError: () async => onError(),
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+      });
+      group('concurrent', () {
+        test(
+            'should call onError and error callback '
+            'when an exception is thrown', () async {
+          final controller = _FakeControllerConcurrent();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() => doneCalled++;
+
+          controller.makeError(
+            onError: () async {
+              onError();
+              throw Exception();
+            },
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+        test(
+            'should execute handler, handle errors, '
+            'and call done callback within runZonedGuarded', () async {
+          final controller = _FakeControllerConcurrent();
+
+          var errorCalled = 0;
+          void onError() {
+            errorCalled++;
+            throw Exception();
+          }
+
+          var doneCalled = 0;
+          void onDone() {
+            doneCalled++;
+            throw Exception();
+          }
+
+          controller.makeError(
+            onError: () async => onError(),
+            onDone: () async => onDone(),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(errorCalled, same(1));
+          expect(doneCalled, same(1));
+        });
+      });
+    });
+
 void _$methodsGroup() => group('methods', () {
       test('toStream', () async {
         final controller = _FakeControllerConcurrent();
@@ -125,6 +292,65 @@ void _$methodsGroup() => group('methods', () {
       });
     });
 
+void _$exceptionalGroup() => group('exceptional', () {
+      test('throws if dispose called multiple times', () {
+        final controller = _FakeControllerConcurrent()..dispose();
+        expect(() => controller.dispose(), throwsA(isA<AssertionError>()));
+      });
+
+      test('handles edge case of adding large values', () async {
+        const largeValue = 9223372036854775807;
+        final controller = _FakeControllerConcurrent()..add(largeValue);
+        await expectLater(controller.done, completes);
+        expect(controller.state, equals(largeValue));
+        controller.dispose();
+      });
+
+      test('handles edge case of subtracting large values', () async {
+        const largeNegativeValue = 9223372036854775807;
+        final controller = _FakeControllerConcurrent()
+          ..subtract(largeNegativeValue);
+        await expectLater(controller.done, completes);
+        expect(controller.state, equals(-largeNegativeValue));
+        controller.dispose();
+      });
+
+      test('processes multiple operations efficiently', () async {
+        final stopwatch = Stopwatch()..start();
+        try {
+          final controller = _FakeControllerConcurrent();
+          for (var i = 0; i < 1000; i++) {
+            controller.add(1);
+          }
+          await expectLater(controller.done, completes);
+          expect(controller.state, equals(1000));
+          controller.dispose();
+        } finally {
+          debugPrint('${(stopwatch..stop()).elapsedMicroseconds} μs');
+        }
+      });
+
+      test('should correctly manage multiple listeners', () {
+        final controller = _FakeControllerConcurrent();
+
+        void listener1() {}
+        void listener2() {}
+
+        expect(controller.subscribers, equals(0));
+
+        controller
+          ..addListener(listener1)
+          ..addListener(listener2);
+        expect(controller.subscribers, equals(2));
+
+        controller.removeListener(listener1);
+        expect(controller.subscribers, equals(1));
+
+        controller.removeListener(listener2);
+        expect(controller.subscribers, equals(0));
+      });
+    });
+
 abstract base class _FakeControllerBase extends StateController<int> {
   _FakeControllerBase({int? initialState})
       : super(initialState: initialState ?? 0);
@@ -140,11 +366,56 @@ abstract base class _FakeControllerBase extends StateController<int> {
       });
 }
 
-final class _FakeControllerSequential = _FakeControllerBase
-    with SequentialControllerHandler;
+final class _FakeControllerSequential extends _FakeControllerBase
+    with SequentialControllerHandler {
+  void makeError({
+    void Function()? onError,
+    void Function()? onDone,
+  }) =>
+      handle(
+        () async {
+          throw Exception();
+        },
+        error: (_, __) async => onError?.call(),
+        done: () async => onDone?.call(),
+      );
+}
 
-final class _FakeControllerDroppable = _FakeControllerBase
-    with DroppableControllerHandler;
+final class _FakeControllerDroppable extends _FakeControllerBase
+    with DroppableControllerHandler {
+  void makeError({
+    void Function()? onError,
+    void Function()? onDone,
+  }) =>
+      handle(
+        () async {
+          throw Exception();
+        },
+        error: (_, __) async => onError?.call(),
+        done: () async => onDone?.call(),
+      );
+}
 
-final class _FakeControllerConcurrent = _FakeControllerBase
-    with ConcurrentControllerHandler;
+final class _FakeControllerConcurrent extends _FakeControllerBase
+    with ConcurrentControllerHandler {
+  void makeError({
+    void Function()? onError,
+    void Function()? onDone,
+  }) =>
+      handle(
+        () async {
+          throw Exception();
+        },
+        error: (_, __) async => onError?.call(),
+        done: () async => onDone?.call(),
+      );
+}
+
+// final class _FakeControllerSequential = _FakeControllerBase
+//     with SequentialControllerHandler;
+
+// final class _FakeControllerDroppable = _FakeControllerBase
+// with DroppableControllerHandler;
+
+// final class _FakeControllerConcurrent = _FakeControllerBase
+// with ConcurrentControllerHandler;

@@ -124,7 +124,7 @@ Widget _appContext({required Widget child, Size? size}) => MediaQuery(
                       ),
                     ),
                   ],
-                  onPopPage: (route, result) => route.didPop(result),
+                  onDidRemovePage: (route) => route.canPop,
                 ),
               ),
             ),
