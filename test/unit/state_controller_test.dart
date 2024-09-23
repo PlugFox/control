@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() => group('StateController', () {
       _$concurrencyGroup();
       _$exceptionalGroup();
+      _$assertionGroup();
       _$methodsGroup();
       _$onErrorGroup();
     });
@@ -87,6 +88,42 @@ void _$concurrencyGroup() => group('concurrency', () {
         expect(controller.state, equals(3));
         expect(controller.isDisposed, isTrue);
         expect(() => controller.removeListener(() {}), returnsNormally);
+      });
+    });
+
+void _$assertionGroup() => group('assertion', () {
+      test('should assert when notifyListeners called on disposed controller',
+          () {
+        final controller = _FakeControllerSequential();
+        controller.dispose(); // ignore: cascade_invocations
+
+        expect(controller.isDisposed, isTrue);
+
+        expect(
+          () => controller.addWithNotifyListeners(1),
+          throwsA(isA<AssertionError>().having(
+            (e) => e.message,
+            'message',
+            contains('A _FakeControllerSequential was already disposed.'),
+          )),
+        );
+      });
+      test('should assert when addListener called on disposed controller', () {
+        final controller = _FakeControllerSequential();
+        controller.dispose(); // ignore: cascade_invocations
+
+        expect(controller.isDisposed, isTrue);
+
+        void listener() {}
+
+        expect(
+          () => controller.addListener(listener),
+          throwsA(isA<AssertionError>().having(
+            (e) => e.message,
+            'message',
+            contains('A _FakeControllerSequential was already disposed.'),
+          )),
+        );
       });
     });
 
@@ -256,6 +293,30 @@ void _$onErrorGroup() => group('onError', () {
     });
 
 void _$methodsGroup() => group('methods', () {
+      test('merge', () async {
+        final controllerOne = _FakeControllerSequential();
+        final controllerTwo = _FakeControllerSequential();
+
+        final mergedListenable =
+            Controller.merge([controllerOne, controllerTwo]);
+
+        // Check that the result is an object of type Listenable
+        expect(mergedListenable, isA<Listenable>());
+
+        // Check that subscribers to mergedListenable listen for changes
+        // in both controllers
+        var listenerCalled = 0;
+        mergedListenable.addListener(() => listenerCalled++);
+
+        controllerOne.add(1);
+        await Future<void>.delayed(Duration.zero);
+        expect(listenerCalled, equals(1));
+
+        controllerTwo.add(1);
+        await Future<void>.delayed(Duration.zero);
+        expect(listenerCalled, equals(2));
+      });
+
       test('toStream', () async {
         final controller = _FakeControllerConcurrent();
         expect(controller.toStream(), isA<Stream<int>>());
@@ -368,6 +429,11 @@ abstract base class _FakeControllerBase extends StateController<int> {
 
 final class _FakeControllerSequential extends _FakeControllerBase
     with SequentialControllerHandler {
+  void addWithNotifyListeners(int value) {
+    state + value; // ignore: unnecessary_statements
+    notifyListeners();
+  }
+
   void makeError({
     void Function()? onError,
     void Function()? onDone,
