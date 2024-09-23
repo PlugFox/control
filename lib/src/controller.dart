@@ -70,7 +70,7 @@ abstract base class Controller with ChangeNotifier implements IController {
     ControllerRegistry().insert<Controller>(this);
     runZonedGuarded<void>(
       () => Controller.observer?.onCreate(this),
-      (error, stackTrace) {/* ignore */},
+      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
     );
   }
 
@@ -96,7 +96,7 @@ abstract base class Controller with ChangeNotifier implements IController {
   @protected
   void onError(Object error, StackTrace stackTrace) => runZonedGuarded<void>(
         () => Controller.observer?.onError(this, error, stackTrace),
-        (error, stackTrace) {/* ignore */},
+        (error, stackTrace) {/* ignore */}, // coverage:ignore-line
       );
 
   @protected
@@ -144,7 +144,7 @@ abstract base class Controller with ChangeNotifier implements IController {
     _$subscribers = 0;
     runZonedGuarded<void>(
       () => Controller.observer?.onDispose(this),
-      (error, stackTrace) {/* ignore */},
+      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
     );
     ControllerRegistry().remove<Controller>();
     super.dispose();
