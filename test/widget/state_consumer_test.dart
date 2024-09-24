@@ -7,6 +7,7 @@ import '../util/test_util.dart';
 
 void main() => group('StateConsumer - ', () {
       _$baseGroup();
+      _$didUpdateWidgetGroup();
       _$debugFillPropertiesGroup();
     });
 
@@ -239,5 +240,76 @@ void _$debugFillPropertiesGroup() => group('debugFillProperties - ', () {
           propertyNames,
           containsAll(['Controller', 'State', 'isProcessing']),
         );
+      });
+    });
+
+void _$didUpdateWidgetGroup() => group('didUpdateWidget - ', () {
+      testWidgets(
+          'should use controller from ControllerScope '
+          'when newController is null', (tester) async {
+        final controller = FakeController();
+
+        await tester.pumpWidget(
+          TestUtil.appContext(
+            child: ControllerScope<FakeController>.value(
+              controller,
+              child: StateConsumer<FakeController, int>(
+                // В первый раз указываем начальный контроллер
+                controller: controller,
+                builder: (context, state, child) => Text('State: $state'),
+              ),
+            ),
+          ),
+        );
+
+        // Change the current controller's state to check
+        // that the widget is updating correctly
+        controller.add(1);
+        await tester.pumpAndSettle();
+        expect(find.text('State: 1'), findsOneWidget);
+
+        // Rebuild the widget without a controller,
+        // check that the controller from ControllerScope is used
+        await tester.pumpWidget(
+          TestUtil.appContext(
+            child: ControllerScope<FakeController>.value(
+              controller,
+              child: StateConsumer<FakeController, int>(
+                // Здесь передаем null контроллер
+                controller: null,
+                builder: (context, state, child) => Text('State: $state'),
+              ),
+            ),
+          ),
+        );
+
+        // Check that the controller state is taken from ControllerScope
+        // and is displayed correctly
+        expect(find.text('State: 1'), findsOneWidget);
+
+        // Change the state of the controller in ControllerScope
+        // and check that the widget is updated correctly
+        controller.add(2);
+        await tester.pumpAndSettle();
+        expect(find.text('State: 3'), findsOneWidget); // Было 1, добавили 2
+
+        // Additionally, we check that a new controller is not created
+        // and is used only from Scope
+        final newController = FakeController();
+        await tester.pumpWidget(
+          TestUtil.appContext(
+            child: ControllerScope<FakeController>.value(
+              controller,
+              child: StateConsumer<FakeController, int>(
+                controller: newController,
+                builder: (context, state, child) => Text('State: $state'),
+              ),
+            ),
+          ),
+        );
+
+        // The new controller has an initial value of 0
+        // and the widget will update to show this.
+        expect(find.text('State: 0'), findsOneWidget);
       });
     });
