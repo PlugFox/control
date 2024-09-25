@@ -36,9 +36,7 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
     C controller, {
     Widget? child,
     super.key,
-  })  : _dependency = _ControllerDependency$Value<C>(
-          controller: controller,
-        ),
+  })  : _dependency = _ControllerDependency$Value<C>(controller: controller),
         super(child: child ?? const SizedBox.shrink());
 
   final _ControllerDependency<C> _dependency;
@@ -46,8 +44,10 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
   /// The state from the closest instance of this class
   /// that encloses the given context, if any.
   /// e.g. `ControllerScope.maybeOf<MyStateController>(context)`.
-  static C? maybeOf<C extends Listenable>(BuildContext context,
-      {bool listen = false}) {
+  static C? maybeOf<C extends Listenable>(
+    BuildContext context, {
+    bool listen = false,
+  }) {
     final element =
         context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
     if (listen && element != null) context.dependOnInheritedElement(element);
@@ -63,8 +63,10 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
   /// The state from the closest instance of this class
   /// that encloses the given context.
   /// e.g. `ControllerScope.of<MyStateController>(context)`
-  static C of<C extends Listenable>(BuildContext context,
-          {bool listen = false}) =>
+  static C of<C extends Listenable>(
+    BuildContext context, {
+    bool listen = false,
+  }) =>
       maybeOf<C>(context, listen: listen) ??
       _notFoundInheritedWidgetOfExactType();
 
@@ -87,8 +89,10 @@ final class ControllerScope$Element<C extends Listenable>
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) =>
-      super.debugFillProperties(
-          _debugFillPropertiesBuilder(_controller, properties));
+      super.debugFillProperties(_debugFillPropertiesBuilder(
+        _controller,
+        properties,
+      ));
 
   @nonVirtual
   C? _controller;
@@ -224,8 +228,10 @@ sealed class _ControllerDependency<C extends Listenable> {
 
 final class _ControllerDependency$Create<C extends Listenable>
     extends _ControllerDependency<C> {
-  const _ControllerDependency$Create(
-      {required this.create, required this.lazy});
+  const _ControllerDependency$Create({
+    required this.create,
+    required this.lazy,
+  });
 
   final C Function() create;
 
@@ -256,19 +262,23 @@ final class _ControllerDependency$Value<C extends Listenable>
 }
 
 DiagnosticPropertiesBuilder _debugFillPropertiesBuilder(
-    Listenable? controller, DiagnosticPropertiesBuilder properties) {
+  Listenable? controller,
+  DiagnosticPropertiesBuilder properties,
+) {
   if (controller == null) return properties;
 
   switch (controller) {
     case StateController<Object> sc:
       properties
-        ..add(
-            DiagnosticsProperty<StateController<Object>>('StateController', sc))
+        ..add(DiagnosticsProperty<StateController<Object>>(
+          'StateController',
+          sc,
+        ))
         ..add(StringProperty('State', sc.state.toString()))
         ..add(IntProperty('Subscribers', sc.subscribers))
         ..add(FlagProperty(
           'isDisposed',
-          value: sc.isProcessing,
+          value: sc.isDisposed,
           ifTrue: 'Disposed',
           ifFalse: 'Not disposed',
         ))
@@ -284,7 +294,7 @@ DiagnosticPropertiesBuilder _debugFillPropertiesBuilder(
         ..add(IntProperty('Subscribers', c.subscribers))
         ..add(FlagProperty(
           'isDisposed',
-          value: c.isProcessing,
+          value: c.isDisposed,
           ifTrue: 'Disposed',
           ifFalse: 'Not disposed',
         ))
@@ -297,7 +307,9 @@ DiagnosticPropertiesBuilder _debugFillPropertiesBuilder(
     case ValueListenable<Object?> vl:
       properties
         ..add(DiagnosticsProperty<ValueListenable<Object?>>.lazy(
-            'ValueListenable', () => vl))
+          'ValueListenable',
+          () => vl,
+        ))
         ..add(StringProperty('Value', vl.value?.toString() ?? 'null'));
     case ChangeNotifier cn:
       properties.add(DiagnosticsProperty<ChangeNotifier>('ChangeNotifier', cn));

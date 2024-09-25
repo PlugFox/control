@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'unit/state_controller_test.dart' as state_controller_test;
 import 'widget/controller_scope_test.dart' as state_scope_test;
+import 'widget/state_consumer_test.dart' as state_consumer_test;
 
 void main() {
   group('unit', () {
@@ -12,5 +13,6 @@ void main() {
 
   group('widget', () {
     state_scope_test.main();
+    state_consumer_test.main();
   });
 }
