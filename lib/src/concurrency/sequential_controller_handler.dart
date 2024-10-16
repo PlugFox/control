@@ -68,6 +68,11 @@ base mixin SequentialControllerHandler on Controller {
             },
           );
 
+          void onDone() {
+            if (completer.isCompleted) return;
+            completer.complete();
+          }
+
           runZonedGuarded<void>(
             () async {
               if (isDisposed) return;
@@ -81,8 +86,9 @@ base mixin SequentialControllerHandler on Controller {
                   await done?.call();
                 } on Object catch (error, stackTrace) {
                   super.onError(error, stackTrace);
+                } finally {
+                  onDone();
                 }
-                if (!completer.isCompleted) completer.complete();
               }
             },
             handleZoneError,

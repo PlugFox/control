@@ -59,7 +59,6 @@ base mixin DroppableControllerHandler on Controller {
     void onDone() {
       if (completer.isCompleted) return;
       _$processingCalls--;
-      if (_$processingCalls != 0) return;
       completer.complete();
     }
 
@@ -84,8 +83,9 @@ base mixin DroppableControllerHandler on Controller {
             await done?.call();
           } on Object catch (error, stackTrace) {
             super.onError(error, stackTrace);
+          } finally {
+            onDone();
           }
-          onDone();
         }
       },
       handleZoneError,
