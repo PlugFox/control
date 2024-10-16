@@ -67,11 +67,11 @@ test: get ## Run the tests
 
 .PHONY: publish-check
 publish-check: ## Check the package before publishing
-	@dart pub publish --dry-run
+	@flutter pub publish --dry-run
 
 .PHONY: publish
 publish: ## Publish the package
-	@yes | dart pub publish
+	@flutter pub publish
 
 .PHONY: analyze
 analyze: get ## Analyze the code
