@@ -106,30 +106,28 @@ abstract base class _FakeControllerBase extends StateController<bool> {
   Future<void> event({
     Map<String, Object?>? meta,
     void Function(HandlerContext context)? out,
-  }) {
-    final eventMeta = {
-      ...?meta,
-      'started_at': DateTime.now(),
-    };
-    return handle(
-      () async {
-        final stopwatch = Stopwatch()..start();
-        try {
-          setState(false);
-          await Future<void>.delayed(Duration.zero);
-          () {
-            out?.call(Controller.context!);
-          }();
-          setState(true);
-          Controller.context?.meta['duration'] = stopwatch.elapsed;
-        } finally {
-          stopwatch.stop();
-        }
-      },
-      name: 'event',
-      meta: eventMeta,
-    );
-  }
+  }) =>
+      handle(
+        () async {
+          final stopwatch = Stopwatch()..start();
+          try {
+            setState(false);
+            await Future<void>.delayed(Duration.zero);
+            () {
+              out?.call(Controller.context!);
+            }();
+            setState(true);
+            Controller.context?.meta['duration'] = stopwatch.elapsed;
+          } finally {
+            stopwatch.stop();
+          }
+        },
+        name: 'event',
+        meta: {
+          ...?meta,
+          'started_at': DateTime.now(),
+        },
+      );
 }
 
 final class _FakeControllerSequential = _FakeControllerBase
