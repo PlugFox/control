@@ -29,6 +29,7 @@ void main() => group('HandlerContext', () {
           expect(lastContext, isNotNull);
           await expectLater(lastContext!.done, completes);
           // Event should be done by now.
+          expect(lastContext!.isDone, isTrue);
           expect(
             lastContext,
             allOf(

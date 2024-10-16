@@ -43,7 +43,7 @@ abstract base class StateController<S extends Object> extends Controller
   void setState(S state) {
     runZonedGuarded<void>(
       () => Controller.observer?.onStateChanged(this, _$state, state),
-      (error, stackTrace) {/* ignore */},
+      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
     );
     _$state = state;
     if (isDisposed) return;
