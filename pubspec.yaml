@@ -35,7 +35,7 @@ platforms:
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
-  flutter: ">=3.0.0"
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
