@@ -21,10 +21,14 @@ void main() => group('HandlerContext', () {
           // After the normal event is called, the context should be available.
           final value = math.Random().nextDouble();
           HandlerContext? lastContext;
-          await controller.event(
+          controller.event(
             meta: <String, Object?>{'double': value},
             out: (ctx) => lastContext = ctx,
-          );
+          ).ignore();
+          expect(controller.isProcessing, isTrue);
+          expect(lastContext, isNotNull);
+          await expectLater(lastContext!.done, completes);
+          // Event should be done by now.
           expect(
             lastContext,
             allOf(
@@ -58,6 +62,16 @@ void main() => group('HandlerContext', () {
                       isA<Duration>(),
                       isNot(Duration.zero),
                     ),
+                  )
+                  .having(
+                    (ctx) => ctx.controller,
+                    'controller',
+                    same(controller),
+                  )
+                  .having(
+                    (ctx) => ctx.isDone,
+                    'isDone',
+                    isTrue,
                   ),
             ),
           );
@@ -109,6 +123,7 @@ abstract base class _FakeControllerBase extends StateController<bool> {
   }) =>
       handle(
         () async {
+          out?.call(Controller.context!);
           final stopwatch = Stopwatch()..start();
           try {
             setState(false);
