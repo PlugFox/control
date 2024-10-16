@@ -20,10 +20,20 @@ final class ControllerObserver implements IControllerObserver {
 
   @override
   void onHandler(HandlerContext context) {
+    final stopwatch = Stopwatch()..start();
     l.d(
       'Controller | ' '${context.controller.name}.${context.name}',
       context.meta,
     );
+    context.done.whenComplete(() {
+      stopwatch.stop();
+      l.d(
+        'Controller | '
+        '${context.controller.name}.${context.name} | '
+        'duration: ${stopwatch.elapsed}',
+        context.meta,
+      );
+    });
   }
 
   @override
