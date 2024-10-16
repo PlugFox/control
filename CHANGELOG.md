@@ -1,3 +1,10 @@
+## 0.2.0
+
+- **ADDED**: `HandlerContext` to handlers, available at zone and observer.
+- **ADDED**: `name` getter for `Controller`
+- **ADDED**: `void onHandler(HandlerContext context)` to `IControllerObserver`
+- **REMOVED**: `done` getter from `Controller`
+
 ## 0.1.0
 
 - **BREAKING CHANGE**: Replace FutureOr with Future in handler
