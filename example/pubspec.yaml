@@ -32,7 +32,7 @@ platforms:
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: '>=3.4.0 <4.0.0'
   flutter: ">=3.16.0"
 
 dependencies:
@@ -48,7 +48,7 @@ dependencies:
   convert: any
 
   # Logger
-  l: ^4.1.0-pre.1
+  l: ^5.0.0-pre.2
 
   # Storage
   shared_preferences: ^2.2.2

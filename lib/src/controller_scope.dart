@@ -81,7 +81,7 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
 @internal
 final class ControllerScope$Element<C extends Listenable>
     extends InheritedElement {
-  ControllerScope$Element(ControllerScope<C> widget) : super(widget);
+  ControllerScope$Element(ControllerScope<C> super.widget);
 
   @nonVirtual
   _ControllerDependency<C> get _dependency =>

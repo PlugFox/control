@@ -1,20 +1,26 @@
 import 'dart:async';
 
 import 'package:control/src/controller.dart';
-import 'package:flutter/foundation.dart' show SynchronousFuture;
+import 'package:control/src/handler_context.dart';
 import 'package:meta/meta.dart';
 
-/// Sequential controller concurrency
+/// A mixin that provides concurrent controller concurrency handling.
+/// This mixin should be used on classes that extend [Controller].
 base mixin ConcurrentControllerHandler on Controller {
   @override
   @nonVirtual
   bool get isProcessing => _$processingCalls > 0;
+
+  /// Tracks the number of ongoing processing calls.
   int _$processingCalls = 0;
 
-  @override
-  Future<void> get done => _done?.future ?? SynchronousFuture<void>(null);
-  Completer<void>? _done;
-
+  /// Handles a given operation with error handling and completion tracking.
+  ///
+  /// [handler] is the main operation to be executed.
+  /// [error] is an optional error handler.
+  /// [done] is an optional callback to be executed when the operation is done.
+  /// [name] is an optional name for the operation, used for debugging.
+  /// [meta] is an optional HashMap of context data to be passed to the zone.
   @override
   @protected
   @mustCallSuper
@@ -22,13 +28,16 @@ base mixin ConcurrentControllerHandler on Controller {
     Future<void> Function() handler, {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
+    String? name,
+    Map<String, Object?>? meta,
   }) {
     if (isDisposed) return Future<void>.value(null);
     _$processingCalls++;
-    final completer = _done ??= Completer<void>();
+    final completer = Completer<void>();
     var isDone = false; // ignore error callback after done
 
     Future<void> onError(Object e, StackTrace st) async {
+      if (isDisposed) return;
       try {
         super.onError(e, st);
         if (isDone || isDisposed || completer.isCompleted) return;
@@ -38,17 +47,38 @@ base mixin ConcurrentControllerHandler on Controller {
       }
     }
 
+    Future<void> handleZoneError(Object error, StackTrace stackTrace) async {
+      if (isDisposed) return;
+      super.onError(error, stackTrace);
+      assert(
+        false,
+        'A zone error occurred during controller event handling. '
+        'This may be caused by an unawaited future. '
+        'Make sure to await all futures in the controller '
+        'event handlers.',
+      );
+    }
+
     void onDone() {
       if (completer.isCompleted) return;
       _$processingCalls--;
-      if (_$processingCalls != 0) return;
       completer.complete();
-      _done = null;
     }
+
+    final handlerContext = HandlerContextImpl(
+      controller: this,
+      name: name ?? 'handler#${handler.runtimeType}',
+      completer: completer,
+      meta: <String, Object?>{
+        ...?meta,
+      },
+    );
 
     runZonedGuarded<void>(
       () async {
         try {
+          if (isDisposed) return;
+          Controller.observer?.onHandler(handlerContext);
           await handler();
         } on Object catch (error, stackTrace) {
           await onError(error, stackTrace);
@@ -58,11 +88,15 @@ base mixin ConcurrentControllerHandler on Controller {
             await done?.call();
           } on Object catch (error, stackTrace) {
             super.onError(error, stackTrace);
+          } finally {
+            onDone();
           }
-          onDone();
         }
       },
-      onError,
+      handleZoneError,
+      zoneValues: <Object?, Object?>{
+        HandlerContext.key: handlerContext,
+      },
     );
 
     return completer.future;
