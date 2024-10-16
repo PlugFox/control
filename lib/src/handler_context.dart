@@ -20,23 +20,38 @@ abstract interface class HandlerContext {
   /// Name of the handler.
   abstract final String name;
 
+  /// Future that completes when the handler is done.
+  Future<void> get done;
+
+  /// Whether the handler is done.
+  bool get isDone;
+
   /// Extra meta information about the handler.
   abstract final Map<String, Object?> context;
 }
 
 @internal
 final class HandlerContextImpl implements HandlerContext {
-  HandlerContextImpl({
-    required this.controller,
-    required this.name,
-    required this.context,
-  });
+  HandlerContextImpl(
+      {required this.controller,
+      required this.name,
+      required this.context,
+      required Completer<void> completer})
+      : _completer = completer;
 
   @override
   final Controller controller;
 
   @override
   final String name;
+
+  @override
+  Future<void> get done => _completer.future;
+
+  @override
+  bool get isDone => _completer.isCompleted;
+
+  final Completer<void> _completer;
 
   @override
   final Map<String, Object?> context;

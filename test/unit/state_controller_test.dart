@@ -21,12 +21,13 @@ void _$concurrencyGroup() => group('concurrency', () {
         expect(controller.state, equals(0));
         expect(controller.subscribers, equals(0));
         expect(controller.isDisposed, isFalse);
-        controller
-          ..add(1)
-          ..subtract(2)
-          ..add(4);
+        final done = Future.wait(<Future<void>>[
+          controller.add(1),
+          controller.subtract(2),
+          controller.add(4),
+        ]);
         expect(controller.isProcessing, isTrue);
-        await expectLater(controller.done, completes);
+        await expectLater(done, completes);
         expect(controller.isProcessing, isFalse);
         expect(controller.state, equals(3));
         expect(controller.subscribers, equals(0));
@@ -46,12 +47,13 @@ void _$concurrencyGroup() => group('concurrency', () {
         expect(controller.state, equals(0));
         expect(controller.subscribers, equals(0));
         expect(controller.isDisposed, isFalse);
-        controller
-          ..add(1)
-          ..subtract(2)
-          ..add(4);
+        final done = Future.wait(<Future<void>>[
+          controller.add(1),
+          controller.subtract(2),
+          controller.add(4),
+        ]);
         expect(controller.isProcessing, isTrue);
-        await expectLater(controller.done, completes);
+        await expectLater(done, completes);
         expect(controller.isProcessing, isFalse);
         expect(controller.state, equals(1));
         expect(controller.subscribers, equals(0));
@@ -71,12 +73,13 @@ void _$concurrencyGroup() => group('concurrency', () {
         expect(controller.state, equals(0));
         expect(controller.subscribers, equals(0));
         expect(controller.isDisposed, isFalse);
-        controller
-          ..add(1)
-          ..subtract(2)
-          ..add(4);
+        final done = Future.wait(<Future<void>>[
+          controller.add(1),
+          controller.subtract(2),
+          controller.add(4),
+        ]);
         expect(controller.isProcessing, isTrue);
-        await expectLater(controller.done, completes);
+        await expectLater(done, completes);
         expect(controller.isProcessing, isFalse);
         expect(controller.state, equals(3));
         expect(controller.subscribers, equals(0));
@@ -99,17 +102,16 @@ void _$exceptionalGroup() => group('exceptional', () {
 
       test('handles edge case of adding large values', () async {
         const largeValue = 9223372036854775807;
-        final controller = _FakeControllerConcurrent()..add(largeValue);
-        await expectLater(controller.done, completes);
+        final controller = _FakeControllerConcurrent();
+        await expectLater(controller.add(largeValue), completes);
         expect(controller.state, equals(largeValue));
         controller.dispose();
       });
 
       test('handles edge case of subtracting large values', () async {
         const largeNegativeValue = 9223372036854775807;
-        final controller = _FakeControllerConcurrent()
-          ..subtract(largeNegativeValue);
-        await expectLater(controller.done, completes);
+        final controller = _FakeControllerConcurrent();
+        await expectLater(controller.subtract(largeNegativeValue), completes);
         expect(controller.state, equals(-largeNegativeValue));
         controller.dispose();
       });
@@ -118,10 +120,9 @@ void _$exceptionalGroup() => group('exceptional', () {
         final stopwatch = Stopwatch()..start();
         try {
           final controller = _FakeControllerConcurrent();
-          for (var i = 0; i < 1000; i++) {
-            controller.add(1);
-          }
-          await expectLater(controller.done, completes);
+          final done = Future.wait(
+              <Future<void>>[for (var i = 0; i < 1000; i++) controller.add(1)]);
+          await expectLater(done, completes);
           expect(controller.state, equals(1000));
           controller.dispose();
         } finally {
@@ -202,11 +203,11 @@ void _$methodsGroup() => group('methods', () {
         var listenerCalled = 0;
         mergedListenable.addListener(() => listenerCalled++);
 
-        controllerOne.add(1);
+        controllerOne.add(1).ignore();
         await Future<void>.delayed(Duration.zero);
         expect(listenerCalled, equals(1));
 
-        controllerTwo.add(1);
+        controllerTwo.add(1).ignore();
         await Future<void>.delayed(Duration.zero);
         expect(listenerCalled, equals(2));
       });
@@ -219,12 +220,15 @@ void _$methodsGroup() => group('methods', () {
           controller.toStream(),
           emitsInOrder(<Object>[1, 0, -1, 2, emitsDone]),
         );
-        controller
-          ..add(1)
-          ..subtract(1)
-          ..subtract(1)
-          ..add(3);
-        await expectLater(controller.done, completes);
+        await expectLater(
+          Future.wait([
+            controller.add(1),
+            controller.subtract(1),
+            controller.subtract(1),
+            controller.add(3),
+          ]),
+          completes,
+        );
         controller.dispose();
       });
 
@@ -233,14 +237,17 @@ void _$methodsGroup() => group('methods', () {
         final listenable = controller.toValueListenable();
         expect(listenable, isA<ValueListenable<int>>());
         expect(listenable.value, equals(controller.state));
-        controller
-          ..add(2)
-          ..subtract(1);
-        await expectLater(controller.done, completes);
+        await expectLater(
+          Future.wait([
+            controller.add(2),
+            controller.subtract(1),
+          ]),
+          completes,
+        );
         expect(listenable.value, equals(controller.state));
         final completer = Completer<void>();
         listenable.addListener(completer.complete);
-        controller.add(1);
+        controller.add(1).ignore();
         await expectLater(completer.future, completes);
         expect(completer.isCompleted, isTrue);
         controller.dispose();
@@ -416,12 +423,12 @@ abstract base class _FakeControllerBase extends StateController<int> {
   _FakeControllerBase({int? initialState})
       : super(initialState: initialState ?? 0);
 
-  void add(int value) => handle(() async {
+  Future<void> add(int value) => handle(() async {
         await Future<void>.delayed(Duration.zero);
         setState(state + value);
       });
 
-  void subtract(int value) => handle(() async {
+  Future<void> subtract(int value) => handle(() async {
         await Future<void>.delayed(Duration.zero);
         setState(state - value);
       });

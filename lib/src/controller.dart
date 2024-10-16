@@ -25,9 +25,6 @@ abstract interface class IController implements Listenable {
   /// Whether the controller is currently handling a requests
   bool get isProcessing;
 
-  /// A future that completes when the controller is done processing.
-  Future<void> get done;
-
   /// Discards any resources used by the object.
   ///
   /// This method should only be called by the object's owner.
@@ -112,6 +109,11 @@ abstract base class Controller with ChangeNotifier implements IController {
         (error, stackTrace) {/* ignore */}, // coverage:ignore-line
       );
 
+  /// Handles a given operation with error handling and completion tracking.
+  ///
+  /// [handler] is the main operation to be executed.
+  /// [name] is an optional name for the operation, used for debugging.
+  /// [context] is an optional HashMap of context data to be passed to the zone.
   @protected
   @override
   Future<void> handle(
