@@ -27,7 +27,7 @@ abstract interface class HandlerContext {
   bool get isDone;
 
   /// Extra meta information about the handler.
-  abstract final Map<String, Object?> context;
+  abstract final Map<String, Object?> meta;
 }
 
 @internal
@@ -35,7 +35,7 @@ final class HandlerContextImpl implements HandlerContext {
   HandlerContextImpl(
       {required this.controller,
       required this.name,
-      required this.context,
+      required this.meta,
       required Completer<void> completer})
       : _completer = completer;
 
@@ -54,5 +54,5 @@ final class HandlerContextImpl implements HandlerContext {
   final Completer<void> _completer;
 
   @override
-  final Map<String, Object?> context;
+  final Map<String, Object?> meta;
 }

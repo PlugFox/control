@@ -30,8 +30,7 @@ abstract base class StateController<S extends Object> extends Controller
   StateController({required S initialState}) : _$state = initialState;
 
   /// Get the handler's context from the current zone.
-  static HandlerContext? getContext(Controller controller) =>
-      HandlerContext.zoned();
+  static HandlerContext? get context => HandlerContext.zoned();
 
   @override
   @nonVirtual

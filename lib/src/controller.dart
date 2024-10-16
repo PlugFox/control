@@ -13,6 +13,11 @@ import 'package:meta/meta.dart';
 /// Do not implement this interface directly, instead extend [Controller].
 @internal
 abstract interface class IController implements Listenable {
+  /// The name of the controller.
+  /// By default, it is the runtime type of the controller.
+  /// Override this property to provide a custom name.
+  String get name;
+
   /// Whether the controller is permanently disposed
   bool get isDisposed;
 
@@ -36,7 +41,7 @@ abstract interface class IController implements Listenable {
   /// sequentially, concurrently, dropped and etc.
   ///
   /// The [name] parameter is used to identify the handler.
-  /// The [context] parameter is used to pass additional
+  /// The [meta] parameter is used to pass additional
   /// information to the handler's zone.
   ///
   /// See:
@@ -46,7 +51,7 @@ abstract interface class IController implements Listenable {
   void handle(
     Future<void> Function() handler, {
     String? name,
-    Map<String, Object?>? context,
+    Map<String, Object?>? meta,
   });
 }
 
@@ -58,7 +63,10 @@ abstract interface class IControllerObserver {
   /// Called when the controller is disposed.
   void onDispose(Controller controller);
 
-  /// Called on any state change in the controller.
+  /// Called when the controller is handling a request.
+  void onHandler(HandlerContext context);
+
+  /// Called on any state change in the [StateController].
   void onStateChanged<S extends Object>(
       StateController<S> controller, S prevState, S nextState);
 
@@ -81,8 +89,7 @@ abstract base class Controller with ChangeNotifier implements IController {
   }
 
   /// Get the handler's context from the current zone.
-  static HandlerContext? getContext(Controller controller) =>
-      HandlerContext.zoned();
+  static HandlerContext? get context => HandlerContext.zoned();
 
   /// Controller observer
   static IControllerObserver? observer;
@@ -93,6 +100,9 @@ abstract base class Controller with ChangeNotifier implements IController {
       Listenable.merge(
         List<Listenable>.unmodifiable(listenables.whereType<Listenable>()),
       );
+
+  @override
+  String get name => runtimeType.toString();
 
   @override
   bool get isDisposed => _$isDisposed;
@@ -113,13 +123,13 @@ abstract base class Controller with ChangeNotifier implements IController {
   ///
   /// [handler] is the main operation to be executed.
   /// [name] is an optional name for the operation, used for debugging.
-  /// [context] is an optional HashMap of context data to be passed to the zone.
+  /// [meta] is an optional HashMap of context data to be passed to the zone.
   @protected
   @override
   Future<void> handle(
     Future<void> Function() handler, {
     String? name,
-    Map<String, Object?>? context,
+    Map<String, Object?>? meta,
   });
 
   @protected

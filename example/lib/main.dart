@@ -10,23 +10,68 @@ final class ControllerObserver implements IControllerObserver {
 
   @override
   void onCreate(Controller controller) {
-    l.v6('Controller | ${controller.runtimeType} | Created');
+    l.v6('Controller | ${controller.name}.new');
   }
 
   @override
   void onDispose(Controller controller) {
-    l.v5('Controller | ${controller.runtimeType} | Disposed');
+    l.v5('Controller | ${controller.name}.dispose');
+  }
+
+  @override
+  void onHandler(HandlerContext context) {
+    l.d(
+      'Controller | ' '${context.controller.name}.${context.name}',
+      context.meta,
+    );
   }
 
   @override
   void onStateChanged<S extends Object>(
-      StateController<S> controller, S prevState, S nextState) {
-    l.d('StateController | ${controller.runtimeType} | $prevState -> $nextState');
+    StateController<S> controller,
+    S prevState,
+    S nextState,
+  ) {
+    final context = Controller.context;
+    if (context == null) {
+      // State change occurred outside of the handler
+      l.d(
+        'StateController | '
+        '${controller.name} | '
+        '$prevState -> $nextState',
+      );
+    } else {
+      // State change occurred inside the handler
+      l.d(
+        'StateController | '
+        '${controller.name}.${context.name} | '
+        '$prevState -> $nextState',
+        context.meta,
+      );
+    }
   }
 
   @override
   void onError(Controller controller, Object error, StackTrace stackTrace) {
-    l.w('Controller | ${controller.runtimeType} | $error', stackTrace);
+    final context = Controller.context;
+    if (context == null) {
+      // Error occurred outside of the handler
+      l.w(
+        'Controller | '
+        '${controller.name} | '
+        '$error',
+        stackTrace,
+      );
+    } else {
+      // Error occurred inside the handler
+      l.w(
+        'Controller | '
+        '${controller.name}.${context.name} | '
+        '$error',
+        stackTrace,
+        context.meta,
+      );
+    }
   }
 }
 

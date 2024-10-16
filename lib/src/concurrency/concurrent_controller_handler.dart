@@ -20,7 +20,7 @@ base mixin ConcurrentControllerHandler on Controller {
   /// [error] is an optional error handler.
   /// [done] is an optional callback to be executed when the operation is done.
   /// [name] is an optional name for the operation, used for debugging.
-  /// [context] is an optional HashMap of context data to be passed to the zone.
+  /// [meta] is an optional HashMap of context data to be passed to the zone.
   @override
   @protected
   @mustCallSuper
@@ -29,7 +29,7 @@ base mixin ConcurrentControllerHandler on Controller {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
     String? name,
-    Map<String, Object?>? context,
+    Map<String, Object?>? meta,
   }) {
     if (isDisposed) return Future<void>.value(null);
     _$processingCalls++;
@@ -67,16 +67,18 @@ base mixin ConcurrentControllerHandler on Controller {
 
     final handlerContext = HandlerContextImpl(
       controller: this,
-      name: name ?? '$runtimeType.handler#${handler.runtimeType}',
+      name: name ?? 'handler#${handler.runtimeType}',
       completer: completer,
-      context: <String, Object?>{
-        ...?context,
+      meta: <String, Object?>{
+        ...?meta,
       },
     );
 
     runZonedGuarded<void>(
       () async {
         try {
+          if (isDisposed) return;
+          Controller.observer?.onHandler(handlerContext);
           await handler();
         } on Object catch (error, stackTrace) {
           await onError(error, stackTrace);
