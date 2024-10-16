@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:control/control.dart';
+import 'package:control/src/handler_context.dart';
 import 'package:control/src/registry.dart';
+import 'package:control/src/state_controller.dart';
 import 'package:flutter/foundation.dart'
     show ChangeNotifier, Listenable, VoidCallback;
 import 'package:meta/meta.dart';
@@ -37,11 +38,19 @@ abstract interface class IController implements Listenable {
   /// Depending on the implementation, the handler may be executed
   /// sequentially, concurrently, dropped and etc.
   ///
+  /// The [name] parameter is used to identify the handler.
+  /// The [context] parameter is used to pass additional
+  /// information to the handler's zone.
+  ///
   /// See:
   ///  - [ConcurrentControllerHandler] - handler that executes concurrently
   ///  - [SequentialControllerHandler] - handler that executes sequentially
   ///  - [DroppableControllerHandler] - handler that drops the request when busy
-  void handle(Future<void> Function() handler);
+  void handle(
+    Future<void> Function() handler, {
+    String? name,
+    Map<String, Object?>? context,
+  });
 }
 
 /// Controller observer
@@ -74,6 +83,10 @@ abstract base class Controller with ChangeNotifier implements IController {
     );
   }
 
+  /// Get the handler's context from the current zone.
+  static HandlerContext? getContext(Controller controller) =>
+      HandlerContext.zoned();
+
   /// Controller observer
   static IControllerObserver? observer;
 
@@ -101,7 +114,11 @@ abstract base class Controller with ChangeNotifier implements IController {
 
   @protected
   @override
-  Future<void> handle(Future<void> Function() handler);
+  Future<void> handle(
+    Future<void> Function() handler, {
+    String? name,
+    Map<String, Object?>? context,
+  });
 
   @protected
   @nonVirtual

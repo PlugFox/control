@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:control/src/controller.dart';
+import 'package:control/src/handler_context.dart';
 import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 
@@ -27,6 +28,10 @@ abstract base class StateController<S extends Object> extends Controller
     implements IStateController<S> {
   /// State controller
   StateController({required S initialState}) : _$state = initialState;
+
+  /// Get the handler's context from the current zone.
+  static HandlerContext? getContext(Controller controller) =>
+      HandlerContext.zoned();
 
   @override
   @nonVirtual

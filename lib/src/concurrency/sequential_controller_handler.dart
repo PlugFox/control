@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:control/src/controller.dart';
+import 'package:control/src/handler_context.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:meta/meta.dart';
 
@@ -24,6 +25,8 @@ base mixin SequentialControllerHandler on Controller {
     Future<void> Function() handler, {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
+    String? name,
+    Map<String, Object?>? context,
   }) =>
       _eventQueue.push<void>(
         () {
@@ -39,6 +42,14 @@ base mixin SequentialControllerHandler on Controller {
               super.onError(error, stackTrace);
             }
           }
+
+          final handlerContext = HandlerContextImpl(
+            controller: this,
+            name: name ?? '$runtimeType.handler#${handler.runtimeType}',
+            context: <String, Object?>{
+              ...?context,
+            },
+          );
 
           runZonedGuarded<void>(
             () async {
@@ -58,6 +69,9 @@ base mixin SequentialControllerHandler on Controller {
               }
             },
             onError,
+            zoneValues: <Object?, Object?>{
+              HandlerContext.key: handlerContext,
+            },
           );
 
           return completer.future;
