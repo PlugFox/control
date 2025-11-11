@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:control/src/handler_context.dart';
-import 'package:control/src/registry.dart';
 import 'package:control/src/state_controller.dart';
 import 'package:flutter/foundation.dart'
     show ChangeNotifier, Listenable, VoidCallback;
@@ -81,7 +80,6 @@ abstract interface class IControllerObserver {
 abstract base class Controller with ChangeNotifier implements IController {
   /// {@macro controller}
   Controller() {
-    ControllerRegistry().insert<Controller>(this);
     runZonedGuarded<void>(
       () => Controller.observer?.onCreate(this),
       (error, stackTrace) {/* ignore */}, // coverage:ignore-line
@@ -175,7 +173,6 @@ abstract base class Controller with ChangeNotifier implements IController {
       () => Controller.observer?.onDispose(this),
       (error, stackTrace) {/* ignore */}, // coverage:ignore-line
     );
-    ControllerRegistry().remove<Controller>();
     super.dispose();
   }
 }
