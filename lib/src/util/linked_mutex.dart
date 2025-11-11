@@ -39,14 +39,13 @@ class LinkedMutex implements Mutex {
     final prior = _head;
     final node = _head = _MutexTask.sync();
     if (prior != null) {
-      try {
-        prior.next = node;
-        await prior.future;
-      } on Object {/* Ignore errors */}
+      prior.next = node;
+      await prior.future;
     }
     return () {
       if (node.isCompleted) return;
       node.complete();
+      if (identical(_head, node)) _head = null;
     };
   }
 
