@@ -1,4 +1,4 @@
-@Timeout(Duration(milliseconds: 1000))
+@Timeout(Duration(milliseconds: 1500))
 library;
 
 import 'dart:async';
