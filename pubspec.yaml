@@ -46,4 +46,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   #benchmark_harness: any
+  #synchronized: any
+  #ffi: ^2.1.0
   flutter_lints: ^6.0.0
