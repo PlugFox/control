@@ -44,7 +44,10 @@ class LinkedMutex implements Mutex {
         await prior.future;
       } on Object {/* Ignore errors */}
     }
-    return node.complete;
+    return () {
+      if (node.isCompleted) return;
+      node.complete();
+    };
   }
 
   /// Synchronizes the execution of a function, ensuring that only one
@@ -64,12 +67,11 @@ class LinkedMutex implements Mutex {
     }
     try {
       final result = await action();
-      node.complete();
       return result;
     } on Object {
-      node.complete();
       rethrow;
     } finally {
+      node.complete();
       if (identical(_head, node)) _head = null;
     }
   }
@@ -80,6 +82,9 @@ final class _MutexTask {
   _MutexTask.sync() : _completer = Completer<void>.sync();
 
   final Completer<void> _completer;
+
+  /// Whether the task has been completed.
+  bool get isCompleted => _completer.isCompleted;
 
   /// The future that completes when the task is done.
   Future<void> get future => _completer.future;
