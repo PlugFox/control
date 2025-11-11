@@ -1,3 +1,6 @@
+@Timeout(Duration(milliseconds: 1000))
+library;
+
 import 'dart:async';
 
 import 'package:control/control.dart';
