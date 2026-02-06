@@ -680,7 +680,7 @@ final class _SimpleTestObserver implements IControllerObserver {
   _SimpleTestObserver({
     this.onCreateCallback,
     this.onDisposeCallback,
-    this.onErrorCallback,
+    this.onErrorCallback, // ignore: unused_element_parameter
   });
 
   final void Function()? onCreateCallback;
