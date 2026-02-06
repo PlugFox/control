@@ -1,7 +1,7 @@
 name: example
 description: "Control example"
 
-publish_to: 'none'
+publish_to: "none"
 
 homepage: https://github.com/PlugFox/control
 
@@ -32,8 +32,8 @@ platforms:
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
-  flutter: ">=3.16.0"
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.0"
 
 dependencies:
   # Flutter SDK
@@ -48,7 +48,7 @@ dependencies:
   convert: any
 
   # Logger
-  l: ^5.0.0-pre.2
+  l: ^5.0.1
 
   # Storage
   shared_preferences: ^2.2.2
@@ -69,10 +69,10 @@ dev_dependencies:
     sdk: flutter
 
   # Linting
-  flutter_lints: ^2.0.1
+  flutter_lints: ^6.0.0
 
   # Code generation
-  build_runner: ^2.4.6
+  build_runner: ^2.10.0
 
 flutter:
   generate: true
