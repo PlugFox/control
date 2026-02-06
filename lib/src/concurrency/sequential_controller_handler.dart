@@ -36,14 +36,8 @@ mixin SequentialControllerHandler on Controller {
     Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
-  }) =>
-      _$mutex.synchronize(
-        () => super.handle(
-          handler,
-          error: error,
-          done: done,
-          name: name,
-          meta: meta,
-        ),
-      );
+  }) => _$mutex.synchronize(
+    () =>
+        super.handle(handler, error: error, done: done, name: name, meta: meta),
+  );
 }

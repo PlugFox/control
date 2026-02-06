@@ -25,19 +25,16 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
     Widget? child,
     bool lazy = true,
     super.key,
-  })  : _dependency = _ControllerDependency$Create<C>(
-          create: create,
-          lazy: lazy,
-        ),
-        super(child: child ?? const SizedBox.shrink());
+  }) : _dependency = _ControllerDependency$Create<C>(
+         create: create,
+         lazy: lazy,
+       ),
+       super(child: child ?? const SizedBox.shrink());
 
   /// {@macro controller_scope}
-  ControllerScope.value(
-    C controller, {
-    Widget? child,
-    super.key,
-  })  : _dependency = _ControllerDependency$Value<C>(controller: controller),
-        super(child: child ?? const SizedBox.shrink());
+  ControllerScope.value(C controller, {Widget? child, super.key})
+    : _dependency = _ControllerDependency$Value<C>(controller: controller),
+      super(child: child ?? const SizedBox.shrink());
 
   final _ControllerDependency<C> _dependency;
 
@@ -48,17 +45,17 @@ class ControllerScope<C extends Listenable> extends InheritedWidget {
     BuildContext context, {
     bool listen = false,
   }) {
-    final element =
-        context.getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
+    final element = context
+        .getElementForInheritedWidgetOfExactType<ControllerScope<C>>();
     if (listen && element != null) context.dependOnInheritedElement(element);
     return element is ControllerScope$Element<C> ? element.controller : null;
   }
 
   static Never _notFoundInheritedWidgetOfExactType() => throw ArgumentError(
-        'Out of scope, not found inherited widget '
-            'a ControllerScope of the exact type',
-        'out_of_scope',
-      );
+    'Out of scope, not found inherited widget '
+        'a ControllerScope of the exact type',
+    'out_of_scope',
+  );
 
   /// The state from the closest instance of this class
   /// that encloses the given context.
@@ -89,10 +86,9 @@ final class ControllerScope$Element<C extends Listenable>
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) =>
-      super.debugFillProperties(_debugFillPropertiesBuilder(
-        _controller,
-        properties,
-      ));
+      super.debugFillProperties(
+        _debugFillPropertiesBuilder(_controller, properties),
+      );
 
   @nonVirtual
   C? _controller;
@@ -210,7 +206,8 @@ final class ControllerScope$Element<C extends Listenable>
     _subscribed = false;
     // Dispose controller if it was created by this scope
     if (_dependency is _ControllerDependency$Create<C> &&
-        listenable is ChangeNotifier) listenable.dispose();
+        listenable is ChangeNotifier)
+      listenable.dispose();
     super.unmount();
   }
 
@@ -270,46 +267,55 @@ DiagnosticPropertiesBuilder _debugFillPropertiesBuilder(
   switch (controller) {
     case StateController<Object> sc:
       properties
-        ..add(DiagnosticsProperty<StateController<Object>>(
-          'StateController',
-          sc,
-        ))
+        ..add(
+          DiagnosticsProperty<StateController<Object>>('StateController', sc),
+        )
         ..add(StringProperty('State', sc.state.toString()))
         ..add(IntProperty('Subscribers', sc.subscribers))
-        ..add(FlagProperty(
-          'isDisposed',
-          value: sc.isDisposed,
-          ifTrue: 'Disposed',
-          ifFalse: 'Not disposed',
-        ))
-        ..add(FlagProperty(
-          'isProcessing',
-          value: sc.isProcessing,
-          ifTrue: 'Processing',
-          ifFalse: 'Idle',
-        ));
+        ..add(
+          FlagProperty(
+            'isDisposed',
+            value: sc.isDisposed,
+            ifTrue: 'Disposed',
+            ifFalse: 'Not disposed',
+          ),
+        )
+        ..add(
+          FlagProperty(
+            'isProcessing',
+            value: sc.isProcessing,
+            ifTrue: 'Processing',
+            ifFalse: 'Idle',
+          ),
+        );
     case Controller c:
       properties
         ..add(DiagnosticsProperty<Controller>.lazy('Controller', () => c))
         ..add(IntProperty('Subscribers', c.subscribers))
-        ..add(FlagProperty(
-          'isDisposed',
-          value: c.isDisposed,
-          ifTrue: 'Disposed',
-          ifFalse: 'Not disposed',
-        ))
-        ..add(FlagProperty(
-          'isProcessing',
-          value: c.isProcessing,
-          ifTrue: 'Processing',
-          ifFalse: 'Idle',
-        ));
+        ..add(
+          FlagProperty(
+            'isDisposed',
+            value: c.isDisposed,
+            ifTrue: 'Disposed',
+            ifFalse: 'Not disposed',
+          ),
+        )
+        ..add(
+          FlagProperty(
+            'isProcessing',
+            value: c.isProcessing,
+            ifTrue: 'Processing',
+            ifFalse: 'Idle',
+          ),
+        );
     case ValueListenable<Object?> vl:
       properties
-        ..add(DiagnosticsProperty<ValueListenable<Object?>>.lazy(
-          'ValueListenable',
-          () => vl,
-        ))
+        ..add(
+          DiagnosticsProperty<ValueListenable<Object?>>.lazy(
+            'ValueListenable',
+            () => vl,
+          ),
+        )
         ..add(StringProperty('Value', vl.value?.toString() ?? 'null'));
     case ChangeNotifier cn:
       properties.add(DiagnosticsProperty<ChangeNotifier>('ChangeNotifier', cn));

@@ -67,7 +67,10 @@ abstract interface class IControllerObserver {
 
   /// Called on any state change in the [StateController].
   void onStateChanged<S extends Object>(
-      StateController<S> controller, S prevState, S nextState);
+    StateController<S> controller,
+    S prevState,
+    S nextState,
+  );
 
   /// Called on any error in the controller.
   void onError(Controller controller, Object error, StackTrace stackTrace);
@@ -82,7 +85,9 @@ abstract class Controller with ChangeNotifier implements IController {
   Controller() {
     runZonedGuarded<void>(
       () => Controller.observer?.onCreate(this),
-      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
+      (error, stackTrace) {
+        /* ignore */
+      }, // coverage:ignore-line
     );
   }
 
@@ -117,9 +122,11 @@ abstract class Controller with ChangeNotifier implements IController {
   /// Error handling callback
   @protected
   void onError(Object error, StackTrace stackTrace) => runZonedGuarded<void>(
-        () => Controller.observer?.onError(this, error, stackTrace),
-        (error, stackTrace) {/* ignore */}, // coverage:ignore-line
-      );
+    () => Controller.observer?.onError(this, error, stackTrace),
+    (error, stackTrace) {
+      /* ignore */
+    }, // coverage:ignore-line
+  );
 
   /// Handles a given operation with error handling and completion tracking.
   ///
@@ -186,9 +193,7 @@ abstract class Controller with ChangeNotifier implements IController {
       controller: this,
       name: name ?? 'handler#${handler.runtimeType}',
       completer: completer,
-      meta: <String, Object?>{
-        ...?meta,
-      },
+      meta: <String, Object?>{...?meta},
     );
 
     runZonedGuarded<void>(
@@ -211,9 +216,7 @@ abstract class Controller with ChangeNotifier implements IController {
         }
       },
       handleZoneError,
-      zoneValues: <Object?, Object?>{
-        HandlerContext.key: handlerContext,
-      },
+      zoneValues: <Object?, Object?>{HandlerContext.key: handlerContext},
     );
 
     return completer.future;
@@ -260,7 +263,9 @@ abstract class Controller with ChangeNotifier implements IController {
     _$subscribers = 0;
     runZonedGuarded<void>(
       () => Controller.observer?.onDispose(this),
-      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
+      (error, stackTrace) {
+        /* ignore */
+      }, // coverage:ignore-line
     );
     super.dispose();
   }

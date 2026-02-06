@@ -10,9 +10,9 @@ abstract interface class HandlerContext {
 
   /// Get the handler's context from the current zone.
   static HandlerContext? zoned() => switch (Zone.current[HandlerContext.key]) {
-        HandlerContext context => context,
-        _ => null,
-      };
+    HandlerContext context => context,
+    _ => null,
+  };
 
   /// Controller that the handler is attached to.
   abstract final Controller controller;
@@ -32,12 +32,12 @@ abstract interface class HandlerContext {
 
 @internal
 final class HandlerContextImpl implements HandlerContext {
-  HandlerContextImpl(
-      {required this.controller,
-      required this.name,
-      required this.meta,
-      required Completer<void> completer})
-      : _completer = completer;
+  HandlerContextImpl({
+    required this.controller,
+    required this.name,
+    required this.meta,
+    required Completer<void> completer,
+  }) : _completer = completer;
 
   @override
   final Controller controller;

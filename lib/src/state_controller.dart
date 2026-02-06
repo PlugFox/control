@@ -5,8 +5,8 @@ import 'package:control/src/handler_context.dart';
 import 'package:flutter/foundation.dart';
 
 /// Selector from [StateController]
-typedef StateControllerSelector<S extends Object, Value> = Value Function(
-    S state);
+typedef StateControllerSelector<S extends Object, Value> =
+    Value Function(S state);
 
 /// Filter for [StateController]
 typedef StateControllerFilter<Value> = bool Function(Value prev, Value next);
@@ -42,7 +42,9 @@ abstract class StateController<S extends Object> extends Controller
   void setState(S state) {
     runZonedGuarded<void>(
       () => Controller.observer?.onStateChanged(this, _$state, state),
-      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
+      (error, stackTrace) {
+        /* ignore */
+      }, // coverage:ignore-line
     );
     _$state = state;
     if (isDisposed) return;
@@ -80,8 +82,7 @@ abstract class StateController<S extends Object> extends Controller
   ValueListenable<Value> select<Value>(
     StateControllerSelector<S, Value> selector, [
     StateControllerFilter<Value>? test,
-  ]) =>
-      _StateController$ValueListenableSelect<S, Value>(this, selector, test);
+  ]) => _StateController$ValueListenableSelect<S, Value>(this, selector, test);
 
   @override
   void dispose() {
