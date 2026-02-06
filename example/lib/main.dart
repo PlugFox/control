@@ -97,8 +97,8 @@ void main() => runZonedGuarded<Future<void>>(
 /// Counter state for [CounterController]
 typedef CounterState = ({int count, bool idle});
 
-/// Counter controller
-final class CounterController extends StateController<CounterState>
+/// Counter controller with sequential handler
+class CounterController extends StateController<CounterState>
     with SequentialControllerHandler {
   CounterController({CounterState? initialState})
       : super(initialState: initialState ?? (idle: true, count: 0));

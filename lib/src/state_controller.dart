@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:control/src/controller.dart';
 import 'package:control/src/handler_context.dart';
 import 'package:flutter/foundation.dart';
-import 'package:meta/meta.dart';
 
 /// Selector from [StateController]
 typedef StateControllerSelector<S extends Object, Value> = Value Function(
@@ -24,7 +23,7 @@ abstract interface class IStateController<S extends Object>
 }
 
 /// State controller
-abstract base class StateController<S extends Object> extends Controller
+abstract class StateController<S extends Object> extends Controller
     implements IStateController<S> {
   /// State controller
   StateController({required S initialState}) : _$state = initialState;
