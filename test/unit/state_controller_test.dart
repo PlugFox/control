@@ -617,7 +617,7 @@ void _$onErrorGroup() => group('onError', () {
   });
 });
 
-abstract base class _FakeControllerBase extends StateController<int> {
+abstract class _FakeControllerBase extends StateController<int> {
   _FakeControllerBase({int? initialState})
     : super(initialState: initialState ?? 0);
 

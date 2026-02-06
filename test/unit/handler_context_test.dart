@@ -104,7 +104,7 @@ final class _FakeControllerObserver implements IControllerObserver {
   }
 }
 
-abstract base class _FakeControllerBase extends StateController<bool> {
+abstract class _FakeControllerBase extends StateController<bool> {
   _FakeControllerBase() : super(initialState: false);
 
   Future<void> event({
