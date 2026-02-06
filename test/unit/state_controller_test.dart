@@ -297,6 +297,124 @@ void _$methodsGroup() => group('methods', () {
     expect(completer.isCompleted, isTrue);
     controller.dispose();
   });
+
+  test('select', () async {
+    final controller = _FakeControllerConcurrent();
+
+    // Test selector without filter
+    final selected = controller.select<String>((state) => 'value:$state');
+    expect(selected, isA<ValueListenable<String>>());
+    expect(selected.value, equals('value:0'));
+
+    // Test that selector updates on state change
+    var listenerCallCount = 0;
+    void listener() => listenerCallCount++;
+    selected.addListener(listener);
+
+    await controller.add(5);
+    expect(selected.value, equals('value:5'));
+    expect(listenerCallCount, equals(1));
+
+    await controller.subtract(3);
+    expect(selected.value, equals('value:2'));
+    expect(listenerCallCount, equals(2));
+
+    selected.removeListener(listener);
+    await controller.add(1);
+    expect(listenerCallCount, equals(2)); // Listener not called after removal
+
+    controller.dispose();
+  });
+
+  test('select with filter', () async {
+    final controller = _FakeControllerConcurrent();
+
+    // Test selector with filter - only notify if value changes
+    final selected = controller.select<bool>(
+      (state) => state > 0,
+      (prev, next) => prev != next, // Only notify if boolean value changes
+    );
+
+    expect(selected.value, equals(false)); // Initial state is 0
+
+    var listenerCallCount = 0;
+    void listener() => listenerCallCount++;
+    selected.addListener(listener);
+
+    // Change from 0 to 5 (false to true) - should notify
+    await controller.add(5);
+    expect(selected.value, equals(true));
+    expect(listenerCallCount, equals(1));
+
+    // Change from 5 to 10 (true to true) - should NOT notify due to filter
+    await controller.add(5);
+    expect(selected.value, equals(true));
+    expect(listenerCallCount, equals(1)); // No change in boolean value
+
+    // Change from 10 to -5 (true to false) - should notify
+    await controller.subtract(15);
+    expect(selected.value, equals(false));
+    expect(listenerCallCount, equals(2));
+
+    selected.removeListener(listener);
+    controller.dispose();
+  });
+
+  test('select on disposed controller', () async {
+    final controller = _FakeControllerConcurrent();
+    final selected = controller.select<String>((state) => 'value:$state');
+
+    void listener() {}
+    selected.addListener(listener);
+
+    controller.dispose();
+
+    // Should not throw when adding listener to disposed controller's selected
+    expect(() => selected.addListener(() {}), returnsNormally);
+    expect(() => selected.removeListener(listener), returnsNormally);
+  });
+
+  test('select value accessed without subscription', () async {
+    final controller = _FakeControllerConcurrent();
+    final selected = controller.select<int>((state) => state * 2);
+
+    // Access value before subscribing - should compute on-demand
+    expect(selected.value, equals(0));
+
+    await controller.add(5);
+    expect(selected.value, equals(10)); // Should compute from current state
+
+    controller.dispose();
+  });
+
+  test('select disposes cleanly', () async {
+    final controller = _FakeControllerConcurrent();
+    final selected = controller.select<int>((state) => state * 2);
+
+    var callCount = 0;
+    void listener() => callCount++;
+
+    // Add and remove listener multiple times
+    selected.addListener(listener);
+    await controller.add(1);
+    expect(callCount, equals(1));
+
+    selected.removeListener(listener);
+    await controller.add(2);
+    expect(callCount, equals(1)); // No change after removal
+
+    // Add listener again
+    selected.addListener(listener);
+    await controller.add(3);
+    expect(callCount, equals(2));
+
+    // Dispose selected - should clean up subscription
+    if (selected is ChangeNotifier) {
+      (selected as ChangeNotifier).dispose();
+    }
+
+    controller.dispose();
+  });
 });
 
 void _$onErrorGroup() => group('onError', () {
@@ -455,6 +573,47 @@ void _$onErrorGroup() => group('onError', () {
       expect(errorCalled, same(1));
       expect(doneCalled, same(1));
     });
+
+    test('should call observer onCreate with error handling', () async {
+      final oldObserver = Controller.observer;
+      var createCalled = false;
+
+      // Observer that throws on onCreate
+      Controller.observer = _SimpleTestObserver(
+        onCreateCallback: () {
+          createCalled = true;
+          throw Exception('onCreate error');
+        },
+      );
+
+      // Create controller - should not throw despite observer error
+      final controller = _FakeControllerConcurrent();
+      expect(createCalled, isTrue);
+
+      Controller.observer = oldObserver;
+      controller.dispose();
+    });
+
+    test('should call observer onDispose with error handling', () async {
+      final controller = _FakeControllerConcurrent();
+
+      final oldObserver = Controller.observer;
+      var disposeCalled = false;
+
+      // Observer that throws on onDispose
+      Controller.observer = _SimpleTestObserver(
+        onDisposeCallback: () {
+          disposeCalled = true;
+          throw Exception('onDispose error');
+        },
+      );
+
+      // Dispose controller - should not throw despite observer error
+      controller.dispose();
+      expect(disposeCalled, isTrue);
+
+      Controller.observer = oldObserver;
+    });
   });
 });
 
@@ -515,4 +674,41 @@ final class _FakeControllerConcurrent extends _FakeControllerBase
     error: (_, _) async => onError?.call(),
     done: () async => onDone?.call(),
   );
+}
+
+final class _SimpleTestObserver implements IControllerObserver {
+  _SimpleTestObserver({
+    this.onCreateCallback,
+    this.onDisposeCallback,
+    this.onErrorCallback,
+  });
+
+  final void Function()? onCreateCallback;
+  final void Function()? onDisposeCallback;
+  final void Function(Object error)? onErrorCallback;
+
+  @override
+  void onCreate(Controller controller) {
+    onCreateCallback?.call();
+  }
+
+  @override
+  void onDispose(Controller controller) {
+    onDisposeCallback?.call();
+  }
+
+  @override
+  void onHandler(HandlerContext context) {}
+
+  @override
+  void onStateChanged<S extends Object>(
+    StateController<S> controller,
+    S prevState,
+    S nextState,
+  ) {}
+
+  @override
+  void onError(Controller controller, Object error, StackTrace stackTrace) {
+    onErrorCallback?.call(error);
+  }
 }
