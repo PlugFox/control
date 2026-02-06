@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:control/src/handler_context.dart';
-import 'package:control/src/registry.dart';
 import 'package:control/src/state_controller.dart';
 import 'package:flutter/foundation.dart'
     show ChangeNotifier, Listenable, VoidCallback;
@@ -40,6 +39,12 @@ abstract interface class IController implements Listenable {
   /// Depending on the implementation, the handler may be executed
   /// sequentially, concurrently, dropped and etc.
   ///
+  /// Returns [Future<T?>] where null indicates the operation was
+  /// cancelled or dropped (e.g., controller disposed or busy).
+  ///
+  /// The [handler] can return a value of type [T].
+  /// The [error] callback is called when an error occurs.
+  /// The [done] callback is called when the operation completes.
   /// The [name] parameter is used to identify the handler.
   /// The [meta] parameter is used to pass additional
   /// information to the handler's zone.
@@ -48,8 +53,10 @@ abstract interface class IController implements Listenable {
   ///  - [ConcurrentControllerHandler] - handler that executes concurrently
   ///  - [SequentialControllerHandler] - handler that executes sequentially
   ///  - [DroppableControllerHandler] - handler that drops the request when busy
-  void handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? error,
+    Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
   });
@@ -68,7 +75,10 @@ abstract interface class IControllerObserver {
 
   /// Called on any state change in the [StateController].
   void onStateChanged<S extends Object>(
-      StateController<S> controller, S prevState, S nextState);
+    StateController<S> controller,
+    S prevState,
+    S nextState,
+  );
 
   /// Called on any error in the controller.
   void onError(Controller controller, Object error, StackTrace stackTrace);
@@ -78,13 +88,14 @@ abstract interface class IControllerObserver {
 /// The controller responsible for processing the logic,
 /// the connection of widgets and the date of the layer.
 /// {@endtemplate}
-abstract base class Controller with ChangeNotifier implements IController {
+abstract class Controller with ChangeNotifier implements IController {
   /// {@macro controller}
   Controller() {
-    ControllerRegistry().insert<Controller>(this);
     runZonedGuarded<void>(
       () => Controller.observer?.onCreate(this),
-      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
+      (error, stackTrace) {
+        /* ignore */
+      }, // coverage:ignore-line
     );
   }
 
@@ -112,25 +123,113 @@ abstract base class Controller with ChangeNotifier implements IController {
   int get subscribers => _$subscribers;
   int _$subscribers = 0;
 
+  @override
+  bool get isProcessing => _$processingCalls > 0;
+  int _$processingCalls = 0;
+
   /// Error handling callback
   @protected
   void onError(Object error, StackTrace stackTrace) => runZonedGuarded<void>(
-        () => Controller.observer?.onError(this, error, stackTrace),
-        (error, stackTrace) {/* ignore */}, // coverage:ignore-line
-      );
+    () => Controller.observer?.onError(this, error, stackTrace),
+    (error, stackTrace) {
+      /* ignore */
+    }, // coverage:ignore-line
+  );
 
   /// Handles a given operation with error handling and completion tracking.
   ///
+  /// By default, operations execute concurrently. To change this behavior,
+  /// use concurrency handler mixins like [SequentialControllerHandler]
+  /// or [DroppableControllerHandler], or use [Mutex] for custom control.
+  ///
+  /// This method provides:
+  /// - Zone for error catching (including unawaited futures)
+  /// - HandlerContext for debugging
+  /// - Observer notifications
+  /// - error/done callbacks
+  ///
   /// [handler] is the main operation to be executed.
+  /// [error] is an optional error handler.
+  /// [done] is an optional callback to be executed when the operation is done.
   /// [name] is an optional name for the operation, used for debugging.
   /// [meta] is an optional HashMap of context data to be passed to the zone.
   @protected
+  @mustCallSuper
   @override
-  Future<void> handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? error,
+    Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
-  });
+  }) {
+    if (isDisposed) return Future<T?>.value(null);
+    _$processingCalls++;
+    final completer = Completer<T?>();
+    var isDone = false; // ignore error callback after done
+
+    Future<void> onError(Object e, StackTrace st) async {
+      if (isDisposed) return;
+      try {
+        this.onError(e, st);
+        if (isDone || isDisposed || completer.isCompleted) return;
+        await error?.call(e, st);
+      } on Object catch (error, stackTrace) {
+        this.onError(error, stackTrace);
+      }
+    }
+
+    Future<void> handleZoneError(Object error, StackTrace stackTrace) async {
+      if (isDisposed) return;
+      this.onError(error, stackTrace);
+      assert(
+        false,
+        'A zone error occurred during controller event handling. '
+        'This may be caused by an unawaited future. '
+        'Make sure to await all futures in the controller '
+        'event handlers.',
+      );
+    }
+
+    void onDone(T? result) {
+      if (completer.isCompleted) return;
+      _$processingCalls--;
+      completer.complete(result);
+    }
+
+    final handlerContext = HandlerContextImpl(
+      controller: this,
+      name: name ?? 'handler#${handler.runtimeType}',
+      completer: completer,
+      meta: <String, Object?>{...?meta},
+    );
+
+    runZonedGuarded<void>(
+      () async {
+        T? result;
+        try {
+          if (isDisposed) return;
+          Controller.observer?.onHandler(handlerContext);
+          result = await handler();
+        } on Object catch (error, stackTrace) {
+          await onError(error, stackTrace);
+        } finally {
+          isDone = true;
+          try {
+            await done?.call();
+          } on Object catch (error, stackTrace) {
+            this.onError(error, stackTrace);
+          } finally {
+            onDone(result);
+          }
+        }
+      },
+      handleZoneError,
+      zoneValues: <Object?, Object?>{HandlerContext.key: handlerContext},
+    );
+
+    return completer.future;
+  }
 
   @protected
   @nonVirtual
@@ -173,9 +272,10 @@ abstract base class Controller with ChangeNotifier implements IController {
     _$subscribers = 0;
     runZonedGuarded<void>(
       () => Controller.observer?.onDispose(this),
-      (error, stackTrace) {/* ignore */}, // coverage:ignore-line
+      (error, stackTrace) {
+        /* ignore */
+      }, // coverage:ignore-line
     );
-    ControllerRegistry().remove<Controller>();
     super.dispose();
   }
 }

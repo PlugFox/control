@@ -3,11 +3,11 @@ description: Sets up the Flutter environment
 
 inputs:
   flutter-version:
-    description: 'The version of Flutter to use'
+    description: "The version of Flutter to use"
     required: false
-    default: '3.24.3'
+    default: "3.38.0"
   pub-cache:
-    description: 'The name of the pub cache variable'
+    description: "The name of the pub cache variable"
     required: false
     default: control
 
@@ -32,7 +32,7 @@ runs:
     - name: 🚂 Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '${{ inputs.flutter-version }}'
+        flutter-version: "${{ inputs.flutter-version }}"
         channel: "stable"
 
     - name: 📤 Restore Pub modules

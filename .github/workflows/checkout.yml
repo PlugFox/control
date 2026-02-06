@@ -43,7 +43,7 @@ jobs:
       - name: 🚂 Setup Flutter and dependencies
         uses: ./.github/actions/setup
         with:
-          flutter-version: 3.24.3
+          flutter-version: 3.38.0
 
       - name: 👷 Install Dependencies
         timeout-minutes: 1
@@ -76,7 +76,7 @@ jobs:
 
       - name: 📥 Upload test report
         uses: actions/upload-artifact@v4
-        if: (success() || failure()) && ${{ github.actor != 'dependabot[bot]' }}
+        if: ${{ (success() || failure()) && github.actor != 'dependabot[bot]' }}
         with:
           name: test-results
           path: reports/tests.json

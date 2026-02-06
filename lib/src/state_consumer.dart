@@ -5,16 +5,16 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 /// Fire when the state changes.
-typedef StateConsumerListener<C extends IStateController<S>, S extends Object>
-    = void Function(BuildContext context, C controller, S previous, S current);
+typedef StateConsumerListener<C extends IStateController<S>, S extends Object> =
+    void Function(BuildContext context, C controller, S previous, S current);
 
 /// Build when the method returns true.
-typedef StateConsumerCondition<S extends Object> = bool Function(
-    S previous, S current);
+typedef StateConsumerCondition<S extends Object> =
+    bool Function(S previous, S current);
 
 /// Rebuild the widget when the state changes.
-typedef StateConsumerBuilder<S extends Object> = Widget Function(
-    BuildContext context, S state, Widget? child);
+typedef StateConsumerBuilder<S extends Object> =
+    Widget Function(BuildContext context, S state, Widget? child);
 
 /// {@template state_consumer}
 /// StateConsumer widget.
@@ -80,7 +80,8 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
     final oldController = oldWidget.controller,
         newController = widget.controller;
     if (identical(oldController, newController) ||
-        oldController == newController) return;
+        oldController == newController)
+      return;
     _unsubscribe();
     _controller =
         newController ?? ControllerScope.of<C>(context, listen: false);
@@ -125,14 +126,21 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) =>
-      super.debugFillProperties(properties
-        ..add(
-            DiagnosticsProperty<IStateController<S>>('Controller', _controller))
-        ..add(DiagnosticsProperty<S>('State', _controller.state))
-        ..add(FlagProperty('isProcessing',
-            value: _controller.isProcessing,
-            ifTrue: 'Processing',
-            ifFalse: 'Idle')));
+      super.debugFillProperties(
+        properties
+          ..add(
+            DiagnosticsProperty<IStateController<S>>('Controller', _controller),
+          )
+          ..add(DiagnosticsProperty<S>('State', _controller.state))
+          ..add(
+            FlagProperty(
+              'isProcessing',
+              value: _controller.isProcessing,
+              ifTrue: 'Processing',
+              ifFalse: 'Idle',
+            ),
+          ),
+      );
 
   @override
   Widget build(BuildContext context) =>

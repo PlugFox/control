@@ -1,7 +1,7 @@
 name: control
 description: "Simple state management for Flutter with concurrency support."
 
-version: 0.2.0
+version: 1.0.0-dev.1
 
 homepage: https://github.com/PlugFox/control
 
@@ -34,15 +34,18 @@ platforms:
 #    path: example.png
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
-  flutter: ">=3.16.0"
+  sdk: ">=3.9.0 <4.0.0"
+  flutter: ">=3.38.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  meta: ^1.0.0
+  meta: ^1.17.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  #benchmark_harness: any
+  #synchronized: any
+  #ffi: ^2.1.0
+  flutter_lints: ^6.0.0
