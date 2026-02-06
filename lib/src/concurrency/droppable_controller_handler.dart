@@ -7,7 +7,7 @@ import 'package:meta/meta.dart';
 /// Droppable controller concurrency handler.
 ///
 /// This mixin drops new operations if one is already running.
-/// When an operation is in progress, new calls to [handle] return immediately
+/// When an operation is in progress, new calls to [handle] return null
 /// without executing the handler.
 ///
 /// Example:
@@ -27,22 +27,23 @@ mixin DroppableControllerHandler on Controller {
 
   /// Handles a given operation with droppable behavior.
   ///
-  /// If an operation is already running, the new one is dropped.
+  /// If an operation is already running, the new one is dropped and null
+  /// is returned.
   @override
   @protected
   @mustCallSuper
-  Future<void> handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
   }) {
-    // If already locked, drop this operation
-    if (_$mutex.locked) return Future<void>.value(null);
+    // If already locked, drop this operation and return null
+    if (_$mutex.locked) return Future<T?>.value(null);
 
-    return _$mutex.synchronize(
-      () => super.handle(
+    return _$mutex.synchronize<T?>(
+      () => super.handle<T?>(
         handler,
         error: error,
         done: done,

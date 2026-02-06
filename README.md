@@ -129,6 +129,47 @@ class MyController extends StateController<MyState> {
 }
 ```
 
+## Return Values from Operations
+
+The `handle()` method is generic and can return values:
+
+```dart
+class UserController extends StateController<UserState> {
+  UserController(this.api) : super(initialState: UserState.initial());
+
+  final UserApi api;
+
+  /// Fetch user and return the user object
+  Future<User> fetchUser(String id) => handle<User>(() async {
+    final user = await api.getUser(id);
+    setState(state.copyWith(user: user, loading: false));
+    return user; // Type-safe return value
+  });
+
+  /// Update user and return success status
+  Future<bool> updateUser(User user) => handle<bool>(() async {
+    try {
+      await api.updateUser(user);
+      setState(state.copyWith(user: user));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
+// Usage
+final user = await controller.fetchUser('123');
+print('Fetched: ${user.name}');
+
+final success = await controller.updateUser(updatedUser);
+if (success) {
+  print('User updated successfully');
+}
+```
+
+**Note:** With `DroppableControllerHandler`, dropped operations return `null` instead of executing.
+
 ## Usage in Flutter
 
 ### Inject Controller
@@ -307,6 +348,207 @@ See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
 4. **Dispose controllers:**
    - Controllers are automatically disposed by `ControllerScope`
    - Manual disposal only needed for manually created controllers
+
+## Advanced Usage
+
+### UI Feedback with Callbacks
+
+Use `error` and `done` callbacks to provide user feedback through SnackBars, dialogs, or notifications:
+
+```dart
+class UserController extends StateController<UserState> {
+  UserController(this.api) : super(initialState: UserState.initial());
+
+  final UserApi api;
+
+  Future<User?> updateProfile(
+    User user, {
+    void Function(User user)? onSuccess,
+    void Function(Object error)? onError,
+  }) => handle<User>(
+    () async {
+      final updatedUser = await api.updateUser(user);
+      setState(state.copyWith(user: updatedUser));
+      onSuccess?.call(updatedUser);
+      return updatedUser;
+    },
+    error: (error, stackTrace) async {
+      onError?.call(error);
+    },
+    name: 'updateProfile',
+    meta: {'userId': user.id},
+  );
+}
+
+// Usage in UI
+ElevatedButton(
+  onPressed: () => controller.updateProfile(
+    updatedUser,
+    onSuccess: (user) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile updated: ${user.name}')),
+      );
+    },
+    onError: (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    },
+  ),
+  child: const Text('Update Profile'),
+)
+```
+
+### Interactive Dialogs During Processing
+
+Add interactive dialogs in the middle of processing for user input:
+
+```dart
+class AuthController extends StateController<AuthState> {
+  AuthController(this.api) : super(initialState: AuthState.initial());
+
+  final AuthApi api;
+
+  Future<bool?> login(
+    String email,
+    String password, {
+    required Future<String> Function() requestSmsCode,
+  }) => handle<bool>(
+    () async {
+      // Step 1: Initial login
+      final session = await api.login(email, password);
+
+      // Step 2: Check if 2FA is required
+      if (session.requires2FA) {
+        // Request SMS code from user via dialog
+        final smsCode = await requestSmsCode();
+
+        // Step 3: Verify SMS code
+        await api.verify2FA(session.id, smsCode);
+      }
+
+      setState(state.copyWith(isAuthenticated: true));
+      return true;
+    },
+    error: (error, stackTrace) async {
+      setState(state.copyWith(error: error.toString()));
+    },
+    name: 'login',
+    meta: {'email': email, 'requires2FA': true},
+  );
+}
+
+// Usage in UI
+ElevatedButton(
+  onPressed: () => controller.login(
+    email,
+    password,
+    requestSmsCode: () async {
+      // Show dialog and wait for user input
+      final code = await showDialog<String>(
+        context: context,
+        builder: (context) => SmsCodeDialog(),
+      );
+      return code ?? '';
+    },
+  ),
+  child: const Text('Login'),
+)
+```
+
+### Debugging and Observability
+
+Use `name` and `meta` parameters for debugging, logging, and integration with error tracking services like Sentry or Crashlytics:
+
+```dart
+class ControllerObserver implements IControllerObserver {
+  const ControllerObserver();
+
+  @override
+  void onHandler(HandlerContext context) {
+    // Log operation start with metadata
+    print('START | ${context.controller.name}.${context.name}');
+    print('META  | ${context.meta}');
+
+    final stopwatch = Stopwatch()..start();
+
+    context.done.whenComplete(() {
+      // Log operation completion with duration
+      stopwatch.stop();
+      print('DONE  | ${context.controller.name}.${context.name} | '
+            'duration: ${stopwatch.elapsed}');
+    });
+  }
+
+  @override
+  void onError(Controller controller, Object error, StackTrace stackTrace) {
+    final context = Controller.context;
+
+    if (context != null) {
+      // Send breadcrumbs to Sentry/Crashlytics
+      Sentry.addBreadcrumb(Breadcrumb(
+        message: '${controller.name}.${context.name}',
+        data: context.meta,
+        level: SentryLevel.error,
+      ));
+
+      // Report error with full context
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+        hint: Hint.withMap({
+          'controller': controller.name,
+          'operation': context.name,
+          'metadata': context.meta,
+        }),
+      );
+    }
+  }
+
+  @override
+  void onStateChanged<S extends Object>(
+    StateController<S> controller,
+    S prevState,
+    S nextState,
+  ) {
+    final context = Controller.context;
+
+    // Log state changes with operation context
+    if (context != null) {
+      print('STATE | ${controller.name}.${context.name} | '
+            '$prevState -> $nextState');
+      print('META  | ${context.meta}');
+    }
+  }
+
+  @override
+  void onCreate(Controller controller) {
+    print('CREATE | ${controller.name}');
+  }
+
+  @override
+  void onDispose(Controller controller) {
+    print('DISPOSE | ${controller.name}');
+  }
+}
+
+// Setup in main
+void main() {
+  Controller.observer = const ControllerObserver();
+  runApp(const App());
+}
+```
+
+**Benefits of using `name` and `meta`:**
+- **Debugging**: Easily track which operation is executing
+- **Logging**: Add context to logs for better traceability
+- **Profiling**: Measure operation duration and performance
+- **Error tracking**: Send rich context to Sentry/Crashlytics
+- **Analytics**: Track user actions with metadata
+- **Breadcrumbs**: Build execution trail for debugging crashes
 
 ## Examples
 

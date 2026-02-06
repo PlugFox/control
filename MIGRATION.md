@@ -57,7 +57,61 @@ class MyController extends StateController<MyState> {
 
 **Action Required:** Remove `with ConcurrentControllerHandler` from your controller declarations. The mixin is deprecated but still available for backwards compatibility.
 
-### 3. Update handle() Calls with Error Handling
+### 3. Handle Generic Return Values
+
+The `handle()` method is now generic and can return values:
+
+**Before (0.x):**
+```dart
+void fetchData() => handle(() async {
+  final data = await api.fetch();
+  setState(state.copyWith(data: data));
+  // No return value
+});
+```
+
+**After (1.0.0):**
+```dart
+// Still works without return value
+void fetchData() => handle(() async {
+  final data = await api.fetch();
+  setState(state.copyWith(data: data));
+});
+
+// NEW: Can now return values
+Future<User> fetchUser(String id) => handle<User>(() async {
+  final user = await api.getUser(id);
+  setState(state.copyWith(user: user));
+  return user; // Type-safe return value!
+});
+```
+
+**Action Required:** None for existing code. This is backward compatible.
+
+### 4. DroppableControllerHandler with Generic Return Values
+
+**Before (0.x):**
+```dart
+// Dropped operations completed with Future<void>.value()
+await controller.operation(); // void
+```
+
+**After (1.0.0):**
+```dart
+// Dropped operations return null with Future<T?>.value(null)
+final result = await controller.operation(); // null if dropped
+if (result != null) {
+  // Operation completed successfully
+  print('Result: $result');
+} else {
+  // Operation was dropped
+  print('Operation dropped: controller is busy');
+}
+```
+
+**Action Required:** None for existing code. The behavior is backward compatible - dropped operations return `null` (expected behavior). If you need to distinguish between dropped operations and successful operations, check for `null` return values.
+
+### 5. Update handle() Calls with Error Handling
 
 The `handle()` method signature has been extended:
 

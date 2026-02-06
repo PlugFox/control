@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() => group('StateController', () {
   _$concurrencyGroup();
+  _$genericHandleGroup();
   _$exceptionalGroup();
   _$assertionGroup();
   _$methodsGroup();
@@ -48,15 +49,23 @@ void _$concurrencyGroup() => group('concurrency', () {
     expect(controller.state, equals(0));
     expect(controller.subscribers, equals(0));
     expect(controller.isDisposed, isFalse);
-    final done = Future.wait(<Future<void>>[
-      controller.add(1),
-      controller.subtract(2),
-      controller.add(4),
-    ]);
+
+    // Start first operation (will succeed)
+    final first = controller.add(1);
     expect(controller.isProcessing, isTrue);
-    await expectLater(done, completes);
+
+    // These will be dropped (controller is busy)
+    final dropped1 = controller.subtract(2);
+    final dropped2 = controller.add(4);
+
+    // Dropped operations complete with null
+    await expectLater(dropped1, completion(isNull));
+    await expectLater(dropped2, completion(isNull));
+
+    // First operation completes
+    await expectLater(first, completes);
     expect(controller.isProcessing, isFalse);
-    expect(controller.state, equals(1));
+    expect(controller.state, equals(1)); // Only first operation executed
     expect(controller.subscribers, equals(0));
     expect(() => controller.addListener(() {}), returnsNormally);
     expect(controller.subscribers, equals(1));
@@ -189,6 +198,41 @@ void _$assertionGroup() => group('assertion', () {
         ),
       ),
     );
+  });
+});
+
+void _$genericHandleGroup() => group('generic handle', () {
+  test('returns value from handler', () async {
+    final controller = _FakeControllerConcurrent();
+    final result = await controller.getValue(42);
+    expect(result, equals(42));
+    controller.dispose();
+  });
+
+  test('sequential returns value', () async {
+    final controller = _FakeControllerSequential();
+    final result = await controller.getValue(100);
+    expect(result, equals(100));
+    controller.dispose();
+  });
+
+  test('droppable returns value when not busy', () async {
+    final controller = _FakeControllerDroppable();
+    final result = await controller.getValue(77);
+    expect(result, equals(77));
+    controller.dispose();
+  });
+
+  test('droppable returns null when busy', () async {
+    final controller = _FakeControllerDroppable();
+    // Start first operation
+    final first = controller.getValue(1);
+    // Try second operation while first is running - returns null
+    final second = await controller.getValue(2);
+    expect(second, isNull); // Dropped, returns null
+    // First operation completes with value
+    await expectLater(first, completion(1));
+    controller.dispose();
   });
 });
 
@@ -426,6 +470,12 @@ abstract base class _FakeControllerBase extends StateController<int> {
   Future<void> subtract(int value) => handle(() async {
     await Future<void>.delayed(Duration.zero);
     setState(state - value);
+  });
+
+  /// Test generic handle - returns a value
+  Future<int?> getValue(int value) => handle<int>(() async {
+    await Future<void>.delayed(Duration.zero);
+    return value;
   });
 }
 

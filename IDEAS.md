@@ -55,12 +55,12 @@ mixin SequentialControllerHandler on Controller {
 - Mixins are now just 10-15 lines each
 - Easier to understand and maintain
 
-### Phase 2: Enhancements (Future)
+### Phase 2: Enhancements
 
-#### 4. Generic `handle<T>()` ⭐
-**Current:** `handle()` only returns `Future<void>`
+#### 4. Generic `handle<T>()` ✅ **(Implemented in v1.0.0-dev.1)**
+**Status:** Implemented
 
-**Proposal:** Make it generic to support return values:
+**Implementation:**
 
 ```dart
 Future<T> handle<T>(Future<T> Function() handler, {...});
@@ -74,9 +74,12 @@ Future<User> fetchUser(String id) => handle<User>(() async {
 ```
 
 **Benefits:**
-- More flexible API
-- Better composition
-- Type-safe return values
+- ✅ More flexible API
+- ✅ Better composition
+- ✅ Type-safe return values
+- ✅ Works with all concurrency strategies
+
+**Breaking Change:** `DroppableControllerHandler` now throws `StateError` when operations are dropped instead of silently completing.
 
 #### 5. `tryLock()` Method for Mutex ⭐
 **Proposal:** Add non-blocking lock attempt:
@@ -262,4 +265,6 @@ Feel free to:
 ---
 
 **Last Updated:** 2026-02-06
-**Status:** Phase 1 (MVP) implemented in v1.0.0-dev.1
+**Status:**
+- Phase 1 (MVP) - ✅ Implemented in v1.0.0-dev.1
+- Phase 2 Item 4 (Generic handle) - ✅ Implemented in v1.0.0-dev.1

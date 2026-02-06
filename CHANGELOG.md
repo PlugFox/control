@@ -1,5 +1,12 @@
 ## 1.0.0-dev.1
 
+### Features
+
+- **ADDED**: Generic `handle<T>()` method - now supports return values
+  - Example: `Future<User> fetchUser(String id) => handle<User>(() async { ... return user; })`
+  - Type-safe return values from controller operations
+  - Works with all concurrency strategies (sequential, concurrent, droppable)
+
 ### Breaking Changes
 
 - **REMOVED**: `base` modifier from `Controller`, `StateController`, and concurrency handler mixins
@@ -15,7 +22,11 @@
   - `ConcurrentControllerHandler` - **deprecated** (base behavior is already concurrent)
 - **CHANGED**: `Controller.handle()` signature now includes `error` and `done` callbacks
   - Before: `handle(handler, {name, meta})`
-  - After: `handle(handler, {error, done, name, meta})`
+  - After: `handle<T>(handler, {error, done, name, meta})`
+- **CHANGED**: `DroppableControllerHandler` now returns `null` when dropping operations
+  - Handle method returns `Future<T?>` to support nullable return values
+  - Dropped operations return `null` instead of throwing errors
+  - This is the expected behavior for droppable operations
 
 ### Added
 

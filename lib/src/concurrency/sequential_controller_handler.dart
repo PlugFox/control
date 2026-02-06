@@ -30,14 +30,19 @@ mixin SequentialControllerHandler on Controller {
   @override
   @protected
   @mustCallSuper
-  Future<void> handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
-  }) => _$mutex.synchronize(
-    () =>
-        super.handle(handler, error: error, done: done, name: name, meta: meta),
+  }) => _$mutex.synchronize<T?>(
+    () => super.handle<T>(
+      handler,
+      error: error,
+      done: done,
+      name: name,
+      meta: meta,
+    ),
   );
 }

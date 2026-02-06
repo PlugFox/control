@@ -39,6 +39,12 @@ abstract interface class IController implements Listenable {
   /// Depending on the implementation, the handler may be executed
   /// sequentially, concurrently, dropped and etc.
   ///
+  /// Returns [Future<T?>] where null indicates the operation was
+  /// cancelled or dropped (e.g., controller disposed or busy).
+  ///
+  /// The [handler] can return a value of type [T].
+  /// The [error] callback is called when an error occurs.
+  /// The [done] callback is called when the operation completes.
   /// The [name] parameter is used to identify the handler.
   /// The [meta] parameter is used to pass additional
   /// information to the handler's zone.
@@ -47,8 +53,10 @@ abstract interface class IController implements Listenable {
   ///  - [ConcurrentControllerHandler] - handler that executes concurrently
   ///  - [SequentialControllerHandler] - handler that executes sequentially
   ///  - [DroppableControllerHandler] - handler that drops the request when busy
-  void handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
+    Future<void> Function(Object error, StackTrace stackTrace)? error,
+    Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
   });
@@ -148,16 +156,16 @@ abstract class Controller with ChangeNotifier implements IController {
   @protected
   @mustCallSuper
   @override
-  Future<void> handle(
-    Future<void> Function() handler, {
+  Future<T?> handle<T>(
+    Future<T> Function() handler, {
     Future<void> Function(Object error, StackTrace stackTrace)? error,
     Future<void> Function()? done,
     String? name,
     Map<String, Object?>? meta,
   }) {
-    if (isDisposed) return Future<void>.value(null);
+    if (isDisposed) return Future<T?>.value(null);
     _$processingCalls++;
-    final completer = Completer<void>();
+    final completer = Completer<T?>();
     var isDone = false; // ignore error callback after done
 
     Future<void> onError(Object e, StackTrace st) async {
@@ -183,10 +191,10 @@ abstract class Controller with ChangeNotifier implements IController {
       );
     }
 
-    void onDone() {
+    void onDone(T? result) {
       if (completer.isCompleted) return;
       _$processingCalls--;
-      completer.complete();
+      completer.complete(result);
     }
 
     final handlerContext = HandlerContextImpl(
@@ -198,10 +206,11 @@ abstract class Controller with ChangeNotifier implements IController {
 
     runZonedGuarded<void>(
       () async {
+        T? result;
         try {
           if (isDisposed) return;
           Controller.observer?.onHandler(handlerContext);
-          await handler();
+          result = await handler();
         } on Object catch (error, stackTrace) {
           await onError(error, stackTrace);
         } finally {
@@ -211,7 +220,7 @@ abstract class Controller with ChangeNotifier implements IController {
           } on Object catch (error, stackTrace) {
             this.onError(error, stackTrace);
           } finally {
-            onDone();
+            onDone(result);
           }
         }
       },
