@@ -90,14 +90,16 @@ void _$baseGroup() => group('base - ', () {
   testWidgets('should not rebuild when buildWhen returns false', (
     tester,
   ) async {
-    final controller = FakeController();
+    final controller1 = FakeController();
+    final controller2 = FakeController();
 
     await tester.pumpWidget(
       TestUtil.appContext(
-        child: ControllerScope.value(
-          controller,
-          child: StateConsumer(
-            controller: controller,
+        child: StateConsumer(
+          controller: controller1,
+          buildWhen: (previous, current) => true, // Outer rebuild
+          builder: (contex, state, child) => StateConsumer(
+            controller: controller2,
             buildWhen: (previous, current) => false, // No rebuild
             builder: (context, state, child) => Text('$state'),
           ),
@@ -107,9 +109,14 @@ void _$baseGroup() => group('base - ', () {
 
     expect(find.text('0'), findsOneWidget);
 
-    controller.add(1);
-
+    controller2.add(1);
     await tester.pumpAndSettle(); // Rebuild should not happen
+
+    expect(find.text('1'), findsNothing); // Should still show 0
+    expect(find.text('0'), findsOneWidget);
+
+    controller1.add(1);
+    await tester.pumpAndSettle(); // Trigger outer rebuild
 
     expect(find.text('1'), findsNothing); // Should still show 0
     expect(find.text('0'), findsOneWidget);

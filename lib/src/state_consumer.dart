@@ -63,13 +63,14 @@ class StateConsumer<C extends IStateController<S>, S extends Object>
 class _StateConsumerState<C extends IStateController<S>, S extends Object>
     extends State<StateConsumer<C, S>> {
   late C _controller;
-  late S _previousState;
+  late S _previousState, _visibleState;
 
   @override
   void didChangeDependencies() {
     _controller =
         widget.controller ?? ControllerScope.of<C>(context, listen: false);
     _previousState = _controller.state;
+    _visibleState = _controller.state;
     _subscribe();
     super.didChangeDependencies();
   }
@@ -86,6 +87,7 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
     _controller =
         newController ?? ControllerScope.of<C>(context, listen: false);
     _previousState = _controller.state;
+    _visibleState = _controller.state;
     _subscribe();
   }
 
@@ -108,6 +110,8 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
     _previousState = newState;
     widget.listener?.call(context, _controller, oldState, newState);
     if (widget.buildWhen?.call(oldState, newState) ?? true) {
+      _visibleState = newState;
+
       // Rebuild the widget when the state changes.
       switch (SchedulerBinding.instance.schedulerPhase) {
         case SchedulerPhase.idle:
@@ -132,6 +136,7 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
             DiagnosticsProperty<IStateController<S>>('Controller', _controller),
           )
           ..add(DiagnosticsProperty<S>('State', _controller.state))
+          ..add(DiagnosticsProperty<S>('Visible state', _visibleState))
           ..add(
             FlagProperty(
               'isProcessing',
@@ -144,7 +149,7 @@ class _StateConsumerState<C extends IStateController<S>, S extends Object>
 
   @override
   Widget build(BuildContext context) =>
-      widget.builder?.call(context, _controller.state, widget.child) ??
+      widget.builder?.call(context, _visibleState, widget.child) ??
       widget.child ??
       const SizedBox.shrink();
 }
